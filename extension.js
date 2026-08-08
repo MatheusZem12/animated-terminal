@@ -178,8 +178,12 @@ function arquivoCss(context) {
 function semNossoBloco(texto) {
     const inicio = texto.indexOf(MARCA_INICIO);
     if (inicio < 0) return texto;
-    const fim = texto.indexOf(MARCA_FIM);
-    if (fim < 0) return texto.slice(0, inicio);
+    // a marca de fim só vale se vier DEPOIS da de início; sem esse par não dá
+    // para saber onde o bloco termina — aí é melhor deixar o resquício quieto
+    // do que decepar o arquivo (foi isso que arrancou 3,4 KB de CSS do
+    // workbench e deixou o campo de commit do Git renderizando fora da caixa)
+    const fim = texto.indexOf(MARCA_FIM, inicio + MARCA_INICIO.length);
+    if (fim < 0) return texto;
     return texto.slice(0, inicio) + texto.slice(fim + MARCA_FIM.length);
 }
 
