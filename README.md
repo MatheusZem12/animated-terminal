@@ -1,0 +1,76 @@
+# Terminal Animado
+
+Fundos animados para o painel do VS Code — sem transformar o editor em aquecedor.
+
+| Efeito | O que tem |
+|---|---|
+| ❄️ Neve | Flocos em duas velocidades, cristais girados e neve acumulada embaixo |
+| 🌧️ Chuva | Chuva em duas camadas, raios que piscam e um rio onde a chuva respinga |
+| 🔥 Brasas | Fagulhas subindo, fumaça difusa e o brilho da braseira embaixo |
+
+## Como usar
+
+`Ctrl+Shift+P` → **Terminal Animado: Escolher Efeito** → recarregue a janela.
+
+Para tirar: **Terminal Animado: Remover Efeito**.
+
+## Configurações
+
+| Chave | Padrão | O que faz |
+|---|---|---|
+| `terminalAnimado.efeito` | `nenhum` | `neve`, `chuva`, `brasas` ou `nenhum` |
+| `terminalAnimado.opacidade` | `0.5` | De `0.05` (fantasma) a `1` (cheio) |
+| `terminalAnimado.velocidade` | `1` | Multiplicador — `0.5` é lento, `2` é rápido |
+
+## Por que é leve
+
+A primeira versão animava dentro do SVG. Parece a escolha óbvia, mas quando um
+SVG é usado como imagem de fundo, o navegador **redesenha a imagem inteira a
+cada quadro** — e o custo não vem da quantidade de partículas, vem do simples
+fato de existir animação. Medido no Chromium (headless, render por software,
+painel de 1500x350 — números altos por não ter GPU, mas comparáveis entre si):
+
+| O que está na tela | Custo |
+|---|---|
+| Página vazia | 1,0% de um núcleo |
+| Camada estática, sem animação | 1,1% |
+| Chão da neve (estático) | 1,3% |
+| Rio com anéis animados dentro do SVG | 62,3% |
+| Camada movida por `transform` no CSS | ~23% |
+
+Daí as duas decisões da arquitetura: **nenhum SVG tem animação dentro** (todos
+são estáticos, rasterizados uma vez) e o movimento vem de `transform` no CSS,
+que é trabalho de composição — barato de verdade quando há GPU, que é o caso do
+VS Code de verdade. Desenhos parados (neve acumulada, boneco, brasa) saem
+de graça.
+
+Os respingos da chuva no rio são três quadros estáticos revezados por
+`@keyframes` na imagem de fundo: cada troca é discreta (~3 repinturas por
+segundo na faixa do rio), nada a ver com os 60 quadros por segundo da
+animação interna que a tabela acima aposentou — barato o bastante para
+ficar ligado até no modo `leve`.
+
+Os tiles têm emenda invisível: quem cruza a borda é duplicado do outro lado, e
+o deslocamento é exatamente a altura do tile, então a repetição não aparece.
+Como o `background-size` é fixo em pixels, redimensionar o painel não
+rasteriza nada de novo.
+
+Se ainda pesar na sua máquina, `terminalAnimado.qualidade: "leve"` deixa uma
+camada animada só — cerca de metade do custo.
+
+## Como funciona por dentro
+
+O VS Code não deixa extensão injetar CSS no workbench, então a extensão
+acrescenta um bloco delimitado por marcadores no
+`workbench.desktop.main.css` da instalação. Consequências:
+
+- Na primeira vez o VS Code avisa que **a instalação parece corrompida** — é
+  esperado; dispense o aviso.
+- É preciso ter permissão de escrita na pasta do VS Code. Sem ela, a extensão
+  mostra o comando `chown` a ser executado.
+- Toda atualização do VS Code apaga o bloco; a extensão detecta e reaplica
+  sozinha na inicialização seguinte.
+
+## Licença
+
+MIT

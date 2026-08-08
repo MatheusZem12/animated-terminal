@@ -1,0 +1,96 @@
+{
+    "name": "terminal-animado",
+    "displayName": "Terminal Animado",
+    "description": "Fundos animados para o terminal do VS Code: neve com boneco de neve, chuva com raios e brasas com fumaça. Animação por GPU, sem travar o editor.",
+    "version": "0.5.2",
+    "publisher": "matheuszem",
+    "license": "MIT",
+    "engines": {
+        "vscode": "^1.80.0"
+    },
+    "categories": [
+        "Themes",
+        "Other"
+    ],
+    "keywords": [
+        "background",
+        "animado",
+        "terminal",
+        "neve",
+        "chuva"
+    ],
+    "galleryBanner": {
+        "color": "#1F1F1F",
+        "theme": "dark"
+    },
+    "main": "./extension.js",
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "contributes": {
+        "commands": [
+            {
+                "command": "terminalAnimado.escolher",
+                "title": "Terminal Animado: Escolher Efeito"
+            },
+            {
+                "command": "terminalAnimado.remover",
+                "title": "Terminal Animado: Remover Efeito"
+            }
+        ],
+        "configuration": {
+            "title": "Terminal Animado",
+            "properties": {
+                "terminalAnimado.efeito": {
+                    "type": "string",
+                    "enum": [
+                        "nenhum",
+                        "neve",
+                        "chuva",
+                        "brasas"
+                    ],
+                    "enumDescriptions": [
+                        "Sem fundo animado",
+                        "Flocos caindo e neve acumulada embaixo",
+                        "Chuva, raios e rio com ondas na água",
+                        "Fagulhas subindo, fumaça e brasa acesa embaixo"
+                    ],
+                    "default": "nenhum",
+                    "description": "Efeito exibido no fundo do painel."
+                },
+                "terminalAnimado.opacidade": {
+                    "type": "number",
+                    "default": 0.5,
+                    "minimum": 0.05,
+                    "maximum": 1,
+                    "description": "Opacidade do efeito (0.05 = quase invisível, 1 = cheio)."
+                },
+                "terminalAnimado.velocidade": {
+                    "type": "number",
+                    "default": 1,
+                    "minimum": 0.25,
+                    "maximum": 3,
+                    "description": "Multiplicador de velocidade das partículas."
+                },
+                "terminalAnimado.qualidade": {
+                    "type": "string",
+                    "enum": [
+                        "completo",
+                        "leve"
+                    ],
+                    "enumDescriptions": [
+                        "Duas camadas de partículas, com profundidade",
+                        "Uma camada só — mais leve ao redimensionar o painel"
+                    ],
+                    "default": "completo",
+                    "description": "Quantidade de camadas animadas."
+                }
+            }
+        }
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/matheuszem/terminal-animado"
+    },
+    "icon": "icon.png"
+}

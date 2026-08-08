@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#252525"/>
+      <stop offset="1" stop-color="#161616"/>
+    </linearGradient>
+    <linearGradient id="neve" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.10"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="128" height="128" rx="26" fill="url(#fundo)"/>
+
+  <!-- flocos ao fundo -->
+  <g fill="#ffffff">
+    <circle cx="22" cy="20" r="2.1" opacity="0.55"/>
+    <circle cx="52" cy="13" r="1.5" opacity="0.4"/>
+    <circle cx="103" cy="22" r="1.8" opacity="0.45"/>
+    <circle cx="86" cy="12" r="1.3" opacity="0.3"/>
+    <circle cx="15" cy="46" r="1.5" opacity="0.35"/>
+    <circle cx="115" cy="52" r="1.4" opacity="0.3"/>
+  </g>
+
+  <!-- neve acumulada -->
+  <path d="M0,104 Q22,92 44,101 Q68,110 90,99 Q110,90 128,100 L128,128 L0,128 Z"
+        fill="url(#neve)"/>
+
+  <!-- terminal -->
+  <g transform="translate(39,43)">
+    <rect x="0" y="0" width="50" height="42" rx="7" fill="#101010"
+          stroke="#3DDC84" stroke-width="2.4"/>
+    <rect x="0" y="0" width="50" height="11" rx="7" fill="#3DDC84" opacity="0.16"/>
+    <circle cx="8" cy="5.6" r="1.7" fill="#3DDC84" opacity="0.85"/>
+    <circle cx="14.5" cy="5.6" r="1.7" fill="#3DDC84" opacity="0.5"/>
+    <polyline points="10,20 17,26 10,32" fill="none" stroke="#3DDC84"
+              stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="22" y1="32" x2="38" y2="32" stroke="#3DDC84"
+          stroke-width="3.1" stroke-linecap="round"/>
+  </g>
+</svg>
