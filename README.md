@@ -2,17 +2,20 @@
 
 Fundos animados para o painel do VS Code — sem transformar o editor em aquecedor.
 
-| Efeito | O que tem |
-|---|---|
-| ❄️ Neve | Flocos em duas velocidades, cristais girados e neve acumulada embaixo |
-| 🌧️ Chuva | Chuva em duas camadas, raios que piscam e um rio onde a chuva respinga |
-| 🔥 Brasas | Fagulhas subindo, fumaça difusa e o brilho da braseira embaixo |
+| Efeito | O que tem | Cores da interface |
+|---|---|---|
+| ❄️ Neve | Flocos com brilho em três profundidades caindo ao sabor do vento, cristais e neve acumulada embaixo | Gelo e azul-céu |
+| 🌧️ Chuva | Chuva em diagonal com traço de gota, raios com clarão que mudam de lugar e gotas respingando no rio em quatro tempos | Azul tempestade |
+| 🔥 Brasas | Fagulhas subindo, fumaça difusa e o brilho da braseira embaixo | Âmbar sobre carvão |
 
 ## Como usar
 
 `Ctrl+Shift+P` → **Terminal Animado: Escolher Efeito** → recarregue a janela.
 
 Para tirar: **Terminal Animado: Remover Efeito**.
+
+Para ligar ou desligar só as cores da interface, mantendo a animação:
+**Terminal Animado: Ligar/Desligar Cores da Interface**.
 
 ## Configurações
 
@@ -21,6 +24,20 @@ Para tirar: **Terminal Animado: Remover Efeito**.
 | `terminalAnimado.efeito` | `nenhum` | `neve`, `chuva`, `brasas` ou `nenhum` |
 | `terminalAnimado.opacidade` | `0.5` | De `0.05` (fantasma) a `1` (cheio) |
 | `terminalAnimado.velocidade` | `1` | Multiplicador — `0.5` é lento, `2` é rápido |
+| `terminalAnimado.colorirInterface` | `true` | Tinge barras, botões e badges na cor do efeito |
+
+## Cores da interface
+
+Com um efeito ativo, a extensão tinge a interface para combinar — brasas deixa
+tudo em tons de vermelho, neve em cinza e branco, chuva em azul. Isso é feito
+pelo `workbench.colorCustomizations` (a API oficial de cores), então funciona
+por cima de qualquer tema e **só mexe em cor**: nenhum tamanho, fonte ou layout
+muda.
+
+O valor original de cada cor é guardado antes de ser sobrescrito. Ao escolher
+"Nenhum" (ou desligar `colorirInterface`), a sua configuração volta exatamente
+como era. Se for desinstalar a extensão com um efeito ativo, remova o efeito
+antes — desinstalada, ela não tem como rodar a restauração.
 
 ## Por que é leve
 
@@ -44,16 +61,19 @@ que é trabalho de composição — barato de verdade quando há GPU, que é o c
 VS Code de verdade. Desenhos parados (neve acumulada, boneco, brasa) saem
 de graça.
 
-Os respingos da chuva no rio são três quadros estáticos revezados por
-`@keyframes` na imagem de fundo: cada troca é discreta (~3 repinturas por
-segundo na faixa do rio), nada a ver com os 60 quadros por segundo da
-animação interna que a tabela acima aposentou — barato o bastante para
-ficar ligado até no modo `leve`.
+Os respingos da chuva no rio são quatro quadros estáticos revezados por
+`@keyframes` na imagem de fundo (impacto, coroa, anel, dissipação): cada troca
+é discreta (~2,5 repinturas por segundo na faixa do rio), nada a ver com os
+60 quadros por segundo da animação interna que a tabela acima aposentou —
+barato o bastante para ficar ligado até no modo `leve`.
 
 Os tiles têm emenda invisível: quem cruza a borda é duplicado do outro lado, e
-o deslocamento é exatamente a altura do tile, então a repetição não aparece.
-Como o `background-size` é fixo em pixels, redimensionar o painel não
-rasteriza nada de novo.
+todo ciclo termina num deslocamento múltiplo exato do tile — a altura no eixo
+vertical e, no horizontal, a largura exata (queda diagonal da chuva) ou zero
+(o vaivém de vento da neve e das brasas vai e volta). O vento, o pulsar da
+brasa e o clarão do raio também são só `transform` e `opacity` — composição,
+sem repintura. Como o `background-size` é fixo em pixels, redimensionar o
+painel não rasteriza nada de novo.
 
 Se ainda pesar na sua máquina, `terminalAnimado.qualidade: "leve"` deixa uma
 camada animada só — cerca de metade do custo.

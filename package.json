@@ -1,8 +1,8 @@
 {
     "name": "terminal-animado",
     "displayName": "Terminal Animado",
-    "description": "Fundos animados para o terminal do VS Code: neve com boneco de neve, chuva com raios e brasas com fumaça. Animação por GPU, sem travar o editor.",
-    "version": "0.5.2",
+    "description": "Fundos animados para o terminal do VS Code: neve ao sabor do vento, chuva em diagonal com raios e respingos no rio, brasas com fagulhas subindo e fumaça. Animação por GPU, sem travar o editor.",
+    "version": "0.7.2",
     "publisher": "matheuszem",
     "license": "MIT",
     "engines": {
@@ -36,6 +36,10 @@
             {
                 "command": "terminalAnimado.remover",
                 "title": "Terminal Animado: Remover Efeito"
+            },
+            {
+                "command": "terminalAnimado.alternarCores",
+                "title": "Terminal Animado: Ligar/Desligar Cores da Interface"
             }
         ],
         "configuration": {
@@ -51,8 +55,8 @@
                     ],
                     "enumDescriptions": [
                         "Sem fundo animado",
-                        "Flocos caindo e neve acumulada embaixo",
-                        "Chuva, raios e rio com ondas na água",
+                        "Flocos com brilho caindo ao sabor do vento, neve acumulada embaixo",
+                        "Chuva em diagonal, raios com clarão e gotas respingando no rio",
                         "Fagulhas subindo, fumaça e brasa acesa embaixo"
                     ],
                     "default": "nenhum",
@@ -72,6 +76,11 @@
                     "maximum": 3,
                     "description": "Multiplicador de velocidade das partículas."
                 },
+                "terminalAnimado.colorirInterface": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Tinge as cores da interface (barras, botões, badges) para combinar com o efeito: brasas em vermelho, neve em cinza e branco, chuva em azul. Só cores — nenhum tamanho ou layout muda. Ao remover o efeito ou desligar isto, suas cores originais voltam."
+                },
                 "terminalAnimado.qualidade": {
                     "type": "string",
                     "enum": [
@@ -79,7 +88,7 @@
                         "leve"
                     ],
                     "enumDescriptions": [
-                        "Duas camadas de partículas, com profundidade",
+                        "Todas as camadas de partículas, com profundidade",
                         "Uma camada só — mais leve ao redimensionar o painel"
                     ],
                     "default": "completo",
