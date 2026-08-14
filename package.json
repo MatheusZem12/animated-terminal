@@ -2,7 +2,7 @@
     "name": "terminal-animado",
     "displayName": "Terminal Animado",
     "description": "Fundos animados para o terminal do VS Code: neve ao sabor do vento, chuva em diagonal com raios e respingos no rio, brasas com fagulhas subindo e fumaça. Animação por GPU, sem travar o editor.",
-    "version": "0.7.2",
+    "version": "0.7.5",
     "publisher": "matheuszem",
     "license": "MIT",
     "engines": {
@@ -79,7 +79,7 @@
                 "terminalAnimado.colorirInterface": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Tinge as cores da interface (barras, botões, badges) para combinar com o efeito: brasas em vermelho, neve em cinza e branco, chuva em azul. Só cores — nenhum tamanho ou layout muda. Ao remover o efeito ou desligar isto, suas cores originais voltam."
+                    "description": "Tinge as cores da interface (barras, botões, badges) para combinar com o efeito: brasas em âmbar acinzentado, neve em cinza-gelo, chuva em azul acinzentado. Só cores — nenhum tamanho ou layout muda. Ao remover o efeito ou desligar isto, suas cores originais voltam."
                 },
                 "terminalAnimado.qualidade": {
                     "type": "string",

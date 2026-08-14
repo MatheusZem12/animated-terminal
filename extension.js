@@ -27,110 +27,121 @@ const EFEITOS = {
 
 const CHAVE_BACKUP = 'coresOriginais';
 
+// Tons médios e dessaturados de propósito: escuro demais (as versões
+// anteriores de chuva e brasas) pesa a interface inteira, e branco puro (a
+// neve original) destoa de qualquer tema escuro. A meta é "disfarçado" — a
+// cor sugere o efeito sem gritar, inclusive na barra de baixo.
 const PALETAS = {
     brasas: {
-        'titleBar.activeBackground': '#331008',
-        'titleBar.activeForeground': '#ffe8d6',
-        'titleBar.inactiveBackground': '#220b06',
-        'titleBar.inactiveForeground': '#b07a63',
-        'activityBar.background': '#2a0e07',
-        'activityBar.foreground': '#ffb289',
-        'activityBar.inactiveForeground': '#8f5a44',
-        'activityBar.activeBorder': '#ff7a29',
-        'activityBarBadge.background': '#ff6d1f',
+        'titleBar.activeBackground': '#3d2a20',
+        'titleBar.activeForeground': '#f3ddc9',
+        'titleBar.inactiveBackground': '#332019',
+        'titleBar.inactiveForeground': '#a8836f',
+        'activityBar.background': '#3a2519',
+        'activityBar.foreground': '#e8bb96',
+        'activityBar.inactiveForeground': '#93705a',
+        'activityBar.activeBorder': '#d97b45',
+        'activityBarBadge.background': '#c96a35',
         'activityBarBadge.foreground': '#ffffff',
-        'statusBar.background': '#5c1a09',
-        'statusBar.foreground': '#ffddc2',
-        'statusBarItem.remoteBackground': '#c2410c',
+        'statusBar.background': '#4a3125',
+        'statusBar.foreground': '#eeddce',
+        'statusBarItem.remoteBackground': '#a85a2e',
         'statusBarItem.remoteForeground': '#ffffff',
-        'button.background': '#ea580c',
+        'button.background': '#b8622f',
         'button.foreground': '#ffffff',
-        'button.hoverBackground': '#ff6d1f',
-        'badge.background': '#ea580c',
+        'button.hoverBackground': '#c96a35',
+        'badge.background': '#b8622f',
         'badge.foreground': '#ffffff',
-        'progressBar.background': '#ff9f43',
-        'focusBorder': '#ff8c42',
-        'panelTitle.activeBorder': '#ff8c42',
-        'panel.border': '#7c2d12',
-        'terminal.tab.activeBorder': '#ff8c42'
+        'progressBar.background': '#e0975c',
+        'focusBorder': '#d97b45',
+        'panelTitle.activeBorder': '#d97b45',
+        'panel.border': '#4d3527',
+        'terminal.tab.activeBorder': '#d97b45'
     },
     neve: {
-        'titleBar.activeBackground': '#eef3f9',
-        'titleBar.activeForeground': '#2e3a48',
-        'titleBar.inactiveBackground': '#dde5ee',
-        'titleBar.inactiveForeground': '#8494a7',
-        'activityBar.background': '#e3eaf2',
-        'activityBar.foreground': '#2e3a48',
-        'activityBar.inactiveForeground': '#93a2b4',
-        'activityBar.activeBorder': '#0ea5e9',
-        'activityBarBadge.background': '#0ea5e9',
+        'titleBar.activeBackground': '#3c4046',
+        'titleBar.activeForeground': '#e4e7ea',
+        'titleBar.inactiveBackground': '#33363b',
+        'titleBar.inactiveForeground': '#8b929a',
+        'activityBar.background': '#383c42',
+        'activityBar.foreground': '#dde1e5',
+        'activityBar.inactiveForeground': '#828990',
+        'activityBar.activeBorder': '#8ab0cc',
+        'activityBarBadge.background': '#5e8caa',
         'activityBarBadge.foreground': '#ffffff',
-        'statusBar.background': '#d7e1ec',
-        'statusBar.foreground': '#2e3a48',
-        'statusBarItem.remoteBackground': '#0284c7',
+        'statusBar.background': '#454a50',
+        'statusBar.foreground': '#dde1e5',
+        'statusBarItem.remoteBackground': '#4d7691',
         'statusBarItem.remoteForeground': '#ffffff',
-        'button.background': '#0284c7',
+        'button.background': '#4d7691',
         'button.foreground': '#ffffff',
-        'button.hoverBackground': '#0ea5e9',
-        'badge.background': '#0ea5e9',
+        'button.hoverBackground': '#5e8caa',
+        'badge.background': '#4d7691',
         'badge.foreground': '#ffffff',
-        'progressBar.background': '#38bdf8',
-        'focusBorder': '#7dd3fc',
-        'panelTitle.activeBorder': '#38bdf8',
-        'panel.border': '#c3d0de',
-        'terminal.tab.activeBorder': '#38bdf8'
+        'progressBar.background': '#8ab0cc',
+        'focusBorder': '#8ab0cc',
+        'panelTitle.activeBorder': '#8ab0cc',
+        'panel.border': '#494d53',
+        'terminal.tab.activeBorder': '#8ab0cc'
     },
     chuva: {
-        'titleBar.activeBackground': '#0c1f33',
-        'titleBar.activeForeground': '#d6eafc',
-        'titleBar.inactiveBackground': '#081522',
-        'titleBar.inactiveForeground': '#6d8cab',
-        'activityBar.background': '#0a1a2b',
-        'activityBar.foreground': '#9ccdf5',
-        'activityBar.inactiveForeground': '#4f7396',
-        'activityBar.activeBorder': '#38bdf8',
-        'activityBarBadge.background': '#1d9bf0',
+        'titleBar.activeBackground': '#213445',
+        'titleBar.activeForeground': '#d3e6f5',
+        'titleBar.inactiveBackground': '#1b2b39',
+        'titleBar.inactiveForeground': '#7691a8',
+        'activityBar.background': '#1f313f',
+        'activityBar.foreground': '#b0d2ea',
+        'activityBar.inactiveForeground': '#6a8ba1',
+        'activityBar.activeBorder': '#5fa3d0',
+        'activityBarBadge.background': '#4088ba',
         'activityBarBadge.foreground': '#ffffff',
-        'statusBar.background': '#103a5e',
-        'statusBar.foreground': '#dcefff',
-        'statusBarItem.remoteBackground': '#1272c4',
+        'statusBar.background': '#2a4256',
+        'statusBar.foreground': '#dcecf7',
+        'statusBarItem.remoteBackground': '#3878a3',
         'statusBarItem.remoteForeground': '#ffffff',
-        'button.background': '#1272c4',
+        'button.background': '#3878a3',
         'button.foreground': '#ffffff',
-        'button.hoverBackground': '#1d9bf0',
-        'badge.background': '#1d9bf0',
+        'button.hoverBackground': '#4088ba',
+        'badge.background': '#3878a3',
         'badge.foreground': '#ffffff',
-        'progressBar.background': '#4db2ff',
-        'focusBorder': '#4db2ff',
-        'panelTitle.activeBorder': '#4db2ff',
-        'panel.border': '#17466e',
-        'terminal.tab.activeBorder': '#4db2ff'
+        'progressBar.background': '#71b3dd',
+        'focusBorder': '#5fa3d0',
+        'panelTitle.activeBorder': '#5fa3d0',
+        'panel.border': '#2c4457',
+        'terminal.tab.activeBorder': '#5fa3d0'
     }
 };
 
-// Cores das paletas de versões antigas (0.6.0), por chave: fazem parte do
-// conjunto "reconhecidamente nosso" para a varredura de resíduo abaixo
-// conseguir limpar sobras de qualquer época.
+// Cores das paletas de versões antigas, por chave: fazem parte do conjunto
+// "reconhecidamente nosso" para a varredura de resíduo abaixo conseguir
+// limpar sobras de qualquer época — inclusive a paleta 0.7.0–0.7.2 (escura
+// demais em brasas/chuva, branca em neve) que esta versão substitui. Cada
+// lista segue [0.6.0, 0.7.0–0.7.2] com brasas/neve/chuva em sequência.
 const CORES_LEGADAS = {
-    'titleBar.activeBackground': ['#5a1412', '#e8edf3', '#10304d'],
-    'titleBar.activeForeground': ['#ffe3d9', '#3b4552', '#d3e7f8'],
-    'titleBar.inactiveBackground': ['#401210', '#d5dce5', '#0c2237'],
-    'titleBar.inactiveForeground': ['#c9968a', '#7d8794', '#7fa2c0'],
-    'activityBar.background': ['#451311', '#dde4ec', '#0d2941'],
-    'activityBar.foreground': ['#ffcdbd', '#3b4552', '#a4cdef'],
-    'activityBar.inactiveForeground': ['#a5675c', '#8d97a5', '#5c81a3'],
-    'activityBarBadge.background': ['#f05e1c', '#6d87a8', '#2f86cc'],
+    'titleBar.activeBackground': ['#5a1412', '#e8edf3', '#10304d', '#331008', '#eef3f9', '#0c1f33'],
+    'titleBar.activeForeground': ['#ffe3d9', '#3b4552', '#d3e7f8', '#ffe8d6', '#2e3a48', '#d6eafc'],
+    'titleBar.inactiveBackground': ['#401210', '#d5dce5', '#0c2237', '#220b06', '#dde5ee', '#081522'],
+    'titleBar.inactiveForeground': ['#c9968a', '#7d8794', '#7fa2c0', '#b07a63', '#8494a7', '#6d8cab'],
+    'activityBar.background': ['#451311', '#dde4ec', '#0d2941', '#2a0e07', '#e3eaf2', '#0a1a2b'],
+    'activityBar.foreground': ['#ffcdbd', '#3b4552', '#a4cdef', '#ffb289', '#2e3a48', '#9ccdf5'],
+    'activityBar.inactiveForeground': ['#a5675c', '#8d97a5', '#5c81a3', '#8f5a44', '#93a2b4', '#4f7396'],
+    'activityBar.activeBorder': ['#ff7a29', '#0ea5e9', '#38bdf8'],
+    'activityBarBadge.background': ['#f05e1c', '#6d87a8', '#2f86cc', '#ff6d1f', '#0ea5e9', '#1d9bf0'],
     'activityBarBadge.foreground': ['#ffffff'],
-    'statusBar.background': ['#7f1d1d', '#cdd7e2', '#155081'],
-    'statusBar.foreground': ['#ffe3d9', '#3b4552', '#dcecfa'],
-    'button.background': ['#c2410c', '#7c92ac', '#1f6db5'],
+    'statusBar.background': ['#7f1d1d', '#cdd7e2', '#155081', '#5c1a09', '#d7e1ec', '#103a5e'],
+    'statusBar.foreground': ['#ffe3d9', '#3b4552', '#dcecfa', '#ffddc2', '#2e3a48', '#dcefff'],
+    'statusBarItem.remoteBackground': ['#c2410c', '#0284c7', '#1272c4'],
+    'statusBarItem.remoteForeground': ['#ffffff'],
+    'button.background': ['#c2410c', '#7c92ac', '#1f6db5', '#ea580c', '#0284c7', '#1272c4'],
     'button.foreground': ['#ffffff'],
-    'button.hoverBackground': ['#ea580c', '#8fa4bc', '#2f86cc'],
-    'badge.background': ['#c2410c', '#7c92ac', '#1f6db5'],
+    'button.hoverBackground': ['#ea580c', '#8fa4bc', '#2f86cc', '#ff6d1f', '#0ea5e9', '#1d9bf0'],
+    'badge.background': ['#c2410c', '#7c92ac', '#1f6db5', '#ea580c', '#0ea5e9', '#1d9bf0'],
     'badge.foreground': ['#ffffff'],
-    'progressBar.background': ['#fb923c', '#9fb3c8', '#3b96e0'],
-    'focusBorder': ['#f97316', '#9fb3c8', '#3b96e0'],
-    'panelTitle.activeBorder': ['#fb923c', '#9fb3c8', '#3b96e0']
+    'progressBar.background': ['#fb923c', '#9fb3c8', '#3b96e0', '#ff9f43', '#38bdf8', '#4db2ff'],
+    'focusBorder': ['#f97316', '#9fb3c8', '#3b96e0', '#ff8c42', '#7dd3fc', '#4db2ff'],
+    'panelTitle.activeBorder': ['#fb923c', '#9fb3c8', '#3b96e0', '#ff8c42', '#38bdf8', '#4db2ff'],
+    'panel.border': ['#7c2d12', '#c3d0de', '#17466e'],
+    'terminal.tab.activeBorder': ['#ff8c42', '#38bdf8', '#4db2ff']
 };
 
 // Tudo que a extensão já escreveu algum dia, como "chave=cor": é o que separa
@@ -525,6 +536,7 @@ function scriptCarregador(urlCss) {
 })();`;
 }
 
+
 /** O bloco é 100% estável: nada nele muda com o efeito nem com a versão. */
 function blocoCarregador(context) {
     return `\n${MARCA_INICIO}\n${scriptCarregador(
@@ -616,10 +628,49 @@ async function aplicarDaConfig(context) {
     }
 }
 
+/**
+ * Encapsula uma função assíncrona sem parâmetros para nunca rodar duas
+ * instâncias em voo ao mesmo tempo: uma chamada que chega enquanto a
+ * anterior ainda está rodando só marca "pendente" — ao terminar, roda-se UMA
+ * vez a mais, pegando o estado mais recente (não uma vez por chamada
+ * pendente, senão uma sequência rápida de trocas enfileira trabalho à toa).
+ *
+ * Sem isto, duas chamadas de aplicarDaConfig concorrentes — o apply da
+ * ativação da janela ainda em voo quando o usuário troca de efeito, duas
+ * trocas rápidas em seguida, ou o mesmo `terminalAnimado.efeito` global
+ * mudando em duas janelas ao mesmo tempo — podiam terminar em ORDEM
+ * TROCADA: a mais lenta, presa a um estado mais velho, ainda vencia a
+ * corrida e escrevia por cima da mais rápida. Era isso que fazia a cor nova
+ * aparecer e, um instante depois, voltar para a antiga.
+ */
+function serializarComColapso(fn) {
+    let emVoo = null;
+    let pendente = false;
+    function agendar() {
+        if (emVoo) {
+            pendente = true;
+            return emVoo;
+        }
+        pendente = false;
+        emVoo = Promise.resolve()
+            .then(fn)
+            .catch((erro) => {
+                console.error('Terminal Animado: falha ao aplicar configuração.', erro);
+            })
+            .finally(() => {
+                emVoo = null;
+                if (pendente) agendar();
+            });
+        return emVoo;
+    }
+    return agendar;
+}
+
 function activate(context) {
     limparCssAntigo();
     limparHtmlAntigo();
-    aplicarDaConfig(context);
+    const agendarAplicarDaConfig = serializarComColapso(() => aplicarDaConfig(context));
+    agendarAplicarDaConfig();
 
     context.subscriptions.push(
         vscode.commands.registerCommand('terminalAnimado.escolher', () => {
@@ -679,7 +730,7 @@ function activate(context) {
 
         vscode.workspace.onDidChangeConfiguration((e) => {
             if (e.affectsConfiguration('terminalAnimado')) {
-                aplicarDaConfig(context);
+                agendarAplicarDaConfig();
             }
         })
     );
@@ -689,11 +740,13 @@ function deactivate() { }
 
 // _cssDoEfeito fica exposto para os testes de desempenho;
 // _blocoCarregador, para ferramentas que pré-aplicam o patch;
-// _aplicarCores e _paletas, para os testes de backup/restauração das cores
+// _aplicarCores e _paletas, para os testes de backup/restauração das cores;
+// _serializarComColapso, para o teste da fila que evita a corrida de escrita
 module.exports = {
     activate, deactivate,
     _cssDoEfeito: cssDoEfeito,
     _blocoCarregador: blocoCarregador,
     _aplicarCores: aplicarCores,
-    _paletas: PALETAS
+    _paletas: PALETAS,
+    _serializarComColapso: serializarComColapso
 };

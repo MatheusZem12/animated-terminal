@@ -4,9 +4,9 @@ Fundos animados para o painel do VS Code — sem transformar o editor em aqueced
 
 | Efeito | O que tem | Cores da interface |
 |---|---|---|
-| ❄️ Neve | Flocos com brilho em três profundidades caindo ao sabor do vento, cristais e neve acumulada embaixo | Gelo e azul-céu |
-| 🌧️ Chuva | Chuva em diagonal com traço de gota, raios com clarão que mudam de lugar e gotas respingando no rio em quatro tempos | Azul tempestade |
-| 🔥 Brasas | Fagulhas subindo, fumaça difusa e o brilho da braseira embaixo | Âmbar sobre carvão |
+| ❄️ Neve | Flocos com brilho em três profundidades caindo ao sabor do vento, cristais e neve acumulada embaixo | Cinza-gelo |
+| 🌧️ Chuva | Chuva em diagonal com traço de gota, raios com clarão que mudam de lugar e gotas respingando no rio em quatro tempos | Azul acinzentado |
+| 🔥 Brasas | Fagulhas subindo, fumaça difusa e o brilho da braseira embaixo | Âmbar acinzentado |
 
 ## Como usar
 
@@ -28,10 +28,12 @@ Para ligar ou desligar só as cores da interface, mantendo a animação:
 
 ## Cores da interface
 
-Com um efeito ativo, a extensão tinge a interface para combinar — brasas deixa
-tudo em tons de vermelho, neve em cinza e branco, chuva em azul. Isso é feito
-pelo `workbench.colorCustomizations` (a API oficial de cores), então funciona
-por cima de qualquer tema e **só mexe em cor**: nenhum tamanho, fonte ou layout
+Com um efeito ativo, a extensão tinge a interface para combinar — em tons
+médios e discretos de propósito, para sugerir o efeito sem gritar em cima de
+nenhum tema: brasas em âmbar acinzentado, neve em cinza-gelo (nunca branco
+puro), chuva em azul acinzentado. Isso é feito pelo
+`workbench.colorCustomizations` (a API oficial de cores), então funciona por
+cima de qualquer tema e **só mexe em cor**: nenhum tamanho, fonte ou layout
 muda.
 
 O valor original de cada cor é guardado antes de ser sobrescrito. Ao escolher
@@ -58,8 +60,7 @@ painel de 1500x350 — números altos por não ter GPU, mas comparáveis entre s
 Daí as duas decisões da arquitetura: **nenhum SVG tem animação dentro** (todos
 são estáticos, rasterizados uma vez) e o movimento vem de `transform` no CSS,
 que é trabalho de composição — barato de verdade quando há GPU, que é o caso do
-VS Code de verdade. Desenhos parados (neve acumulada, boneco, brasa) saem
-de graça.
+VS Code de verdade. Desenhos parados (neve acumulada, brasa) saem de graça.
 
 Os respingos da chuva no rio são quatro quadros estáticos revezados por
 `@keyframes` na imagem de fundo (impacto, coroa, anel, dissipação): cada troca
@@ -70,10 +71,10 @@ barato o bastante para ficar ligado até no modo `leve`.
 Os tiles têm emenda invisível: quem cruza a borda é duplicado do outro lado, e
 todo ciclo termina num deslocamento múltiplo exato do tile — a altura no eixo
 vertical e, no horizontal, a largura exata (queda diagonal da chuva) ou zero
-(o vaivém de vento da neve e das brasas vai e volta). O vento, o pulsar da
-brasa e o clarão do raio também são só `transform` e `opacity` — composição,
-sem repintura. Como o `background-size` é fixo em pixels, redimensionar o
-painel não rasteriza nada de novo.
+(o vaivém de vento da neve vai e volta). O vento e o clarão do raio também são
+só `transform` e `opacity` — composição, sem repintura. Como o
+`background-size` é fixo em pixels, redimensionar o painel não rasteriza nada
+de novo.
 
 Se ainda pesar na sua máquina, `terminalAnimado.qualidade: "leve"` deixa uma
 camada animada só — cerca de metade do custo.

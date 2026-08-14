@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.7.5
+
+- Corrige a cor "piscando": a nova cor aparecia e, um instante depois,
+  voltava para a antiga. A causa era falta de serialização — duas chamadas
+  de aplicação concorrentes (o apply da ativação da janela ainda em voo
+  quando você troca de efeito, duas trocas rápidas em seguida, ou o mesmo
+  efeito mudando em duas janelas ao mesmo tempo) podiam terminar em ordem
+  trocada: a mais lenta, presa a um estado mais velho, ainda vencia a
+  corrida e escrevia por cima da mais rápida. Agora só uma aplicação roda
+  por vez; quem chega enquanto a anterior está em voo não dispara uma
+  corrida nova — só marca "pendente" e, ao terminar, roda mais uma vez
+  pegando sempre a configuração mais recente
+
+## 0.7.4
+
+- O som ambiente lo-fi da 0.7.3 saiu: não pegou bem. Removido o motor de
+  áudio inteiro (Web Audio, o arquivo `audio.json`, a configuração `som` e
+  `volumeSom`, o comando "Ligar/Desligar Som") — a extensão volta a ser só
+  visual, como sempre foi
+- As paletas de cor mais discretas e a neve em cinza-gelo (em vez de branco)
+  da 0.7.3 continuam valendo — isso não fazia parte da reclamação
+
+## 0.7.3
+
+- Som ambiente lo-fi, um por efeito: chuva caindo com pingos, vento em
+  rajadas para a neve e uma fogueira crepitando para as brasas. Tudo
+  **sintetizado na hora com Web Audio** (ruído filtrado + osciladores de
+  baixa frequência modulando corte e ganho, mais estouros curtos agendados
+  aleatoriamente para pingos e estalos) — nenhum arquivo de áudio embutido,
+  então o pacote da extensão não engorda. Uma camada comum de "agulha de
+  vinil" (ruído passa-faixa bem baixinho) dá o toque lo-fi aos três
+  ambientes. Volume padrão bem baixo (`terminalAnimado.volumeSom`, 0.14) e
+  um interruptor dedicado (`terminalAnimado.som`, comando "Ligar/Desligar
+  Som")
+- O som se apaga sozinho quando a janela perde o foco (senão, com duas
+  janelas do VS Code abertas, as duas tocariam juntas) e quando o painel do
+  terminal está fechado — reagindo em até 1s, sempre com um fade suave, sem
+  clique. O estado do som mora num arquivo à parte do CSS de propósito:
+  ficar no mesmo arquivo faria ajustar só o volume reiniciar as animações
+  (o mesmo tipo de engasgo que a 0.7.1 corrigiu para o CSS)
+- Paletas da interface revistas: as de chuva e brasas estavam escuras
+  demais, e a de neve, branca demais (destoando de temas escuros). Agora as
+  três usam tons médios e discretos — inclusive na barra de baixo — e neve
+  usa cinza-gelo em vez de branco
+- A varredura de resíduo de cor (0.7.2) agora também reconhece as cores da
+  paleta 0.7.0–0.7.2, então quem estava com a paleta antiga aplicada sai
+  limpo ao atualizar, sem precisar desligar e religar as cores na mão
+
 ## 0.7.2
 
 - Desligar as cores (ou trocar/remover o efeito) agora limpa TUDO que é da
