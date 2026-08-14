@@ -33,17 +33,19 @@ const CHAVE_BACKUP = 'coresOriginais';
 // cor sugere o efeito sem gritar, inclusive na barra de baixo.
 const PALETAS = {
     brasas: {
-        'titleBar.activeBackground': '#3d2a20',
+        // fundos em vermelho translúcido (RGBA sobre o tema, opacidade baixa
+        // de propósito) — a versão sólida anterior lia como marrom, não brasa
+        'titleBar.activeBackground': '#c42a2a2e',
         'titleBar.activeForeground': '#f3ddc9',
-        'titleBar.inactiveBackground': '#332019',
+        'titleBar.inactiveBackground': '#c42a2a22',
         'titleBar.inactiveForeground': '#a8836f',
-        'activityBar.background': '#3a2519',
+        'activityBar.background': '#c42a2a28',
         'activityBar.foreground': '#e8bb96',
         'activityBar.inactiveForeground': '#93705a',
         'activityBar.activeBorder': '#d97b45',
         'activityBarBadge.background': '#c96a35',
         'activityBarBadge.foreground': '#ffffff',
-        'statusBar.background': '#4a3125',
+        'statusBar.background': '#c42a2a38',
         'statusBar.foreground': '#eeddce',
         'statusBarItem.remoteBackground': '#a85a2e',
         'statusBarItem.remoteForeground': '#ffffff',
@@ -55,7 +57,7 @@ const PALETAS = {
         'progressBar.background': '#e0975c',
         'focusBorder': '#d97b45',
         'panelTitle.activeBorder': '#d97b45',
-        'panel.border': '#4d3527',
+        'panel.border': '#c42a2a40',
         'terminal.tab.activeBorder': '#d97b45'
     },
     neve: {
@@ -116,19 +118,21 @@ const PALETAS = {
 // "reconhecidamente nosso" para a varredura de resíduo abaixo conseguir
 // limpar sobras de qualquer época — inclusive a paleta 0.7.0–0.7.2 (escura
 // demais em brasas/chuva, branca em neve) que esta versão substitui. Cada
-// lista segue [0.6.0, 0.7.0–0.7.2] com brasas/neve/chuva em sequência.
+// lista segue [0.6.0, 0.7.0–0.7.2] com brasas/neve/chuva em sequência; os
+// fundos de brasas 0.7.3–0.7.5 (marrom sólido, trocado por vermelho
+// translúcido) entram soltos no fim de cada lista que mudou.
 const CORES_LEGADAS = {
-    'titleBar.activeBackground': ['#5a1412', '#e8edf3', '#10304d', '#331008', '#eef3f9', '#0c1f33'],
+    'titleBar.activeBackground': ['#5a1412', '#e8edf3', '#10304d', '#331008', '#eef3f9', '#0c1f33', '#3d2a20'],
     'titleBar.activeForeground': ['#ffe3d9', '#3b4552', '#d3e7f8', '#ffe8d6', '#2e3a48', '#d6eafc'],
-    'titleBar.inactiveBackground': ['#401210', '#d5dce5', '#0c2237', '#220b06', '#dde5ee', '#081522'],
+    'titleBar.inactiveBackground': ['#401210', '#d5dce5', '#0c2237', '#220b06', '#dde5ee', '#081522', '#332019'],
     'titleBar.inactiveForeground': ['#c9968a', '#7d8794', '#7fa2c0', '#b07a63', '#8494a7', '#6d8cab'],
-    'activityBar.background': ['#451311', '#dde4ec', '#0d2941', '#2a0e07', '#e3eaf2', '#0a1a2b'],
+    'activityBar.background': ['#451311', '#dde4ec', '#0d2941', '#2a0e07', '#e3eaf2', '#0a1a2b', '#3a2519'],
     'activityBar.foreground': ['#ffcdbd', '#3b4552', '#a4cdef', '#ffb289', '#2e3a48', '#9ccdf5'],
     'activityBar.inactiveForeground': ['#a5675c', '#8d97a5', '#5c81a3', '#8f5a44', '#93a2b4', '#4f7396'],
     'activityBar.activeBorder': ['#ff7a29', '#0ea5e9', '#38bdf8'],
     'activityBarBadge.background': ['#f05e1c', '#6d87a8', '#2f86cc', '#ff6d1f', '#0ea5e9', '#1d9bf0'],
     'activityBarBadge.foreground': ['#ffffff'],
-    'statusBar.background': ['#7f1d1d', '#cdd7e2', '#155081', '#5c1a09', '#d7e1ec', '#103a5e'],
+    'statusBar.background': ['#7f1d1d', '#cdd7e2', '#155081', '#5c1a09', '#d7e1ec', '#103a5e', '#4a3125'],
     'statusBar.foreground': ['#ffe3d9', '#3b4552', '#dcecfa', '#ffddc2', '#2e3a48', '#dcefff'],
     'statusBarItem.remoteBackground': ['#c2410c', '#0284c7', '#1272c4'],
     'statusBarItem.remoteForeground': ['#ffffff'],
@@ -140,7 +144,7 @@ const CORES_LEGADAS = {
     'progressBar.background': ['#fb923c', '#9fb3c8', '#3b96e0', '#ff9f43', '#38bdf8', '#4db2ff'],
     'focusBorder': ['#f97316', '#9fb3c8', '#3b96e0', '#ff8c42', '#7dd3fc', '#4db2ff'],
     'panelTitle.activeBorder': ['#fb923c', '#9fb3c8', '#3b96e0', '#ff8c42', '#38bdf8', '#4db2ff'],
-    'panel.border': ['#7c2d12', '#c3d0de', '#17466e'],
+    'panel.border': ['#7c2d12', '#c3d0de', '#17466e', '#4d3527'],
     'terminal.tab.activeBorder': ['#ff8c42', '#38bdf8', '#4db2ff']
 };
 

@@ -6,7 +6,7 @@ Fundos animados para o painel do VS Code — sem transformar o editor em aqueced
 |---|---|---|
 | ❄️ Neve | Flocos com brilho em três profundidades caindo ao sabor do vento, cristais e neve acumulada embaixo | Cinza-gelo |
 | 🌧️ Chuva | Chuva em diagonal com traço de gota, raios com clarão que mudam de lugar e gotas respingando no rio em quatro tempos | Azul acinzentado |
-| 🔥 Brasas | Fagulhas subindo, fumaça difusa e o brilho da braseira embaixo | Âmbar acinzentado |
+| 🔥 Brasas | Fagulhas subindo, fumaça difusa e o brilho da braseira embaixo | Vermelho translúcido |
 
 ## Como usar
 
@@ -30,8 +30,9 @@ Para ligar ou desligar só as cores da interface, mantendo a animação:
 
 Com um efeito ativo, a extensão tinge a interface para combinar — em tons
 médios e discretos de propósito, para sugerir o efeito sem gritar em cima de
-nenhum tema: brasas em âmbar acinzentado, neve em cinza-gelo (nunca branco
-puro), chuva em azul acinzentado. Isso é feito pelo
+nenhum tema: brasas em vermelho translúcido (RGBA de opacidade baixa, para
+não virar um marrom sólido), neve em cinza-gelo (nunca branco puro), chuva em
+azul acinzentado. Isso é feito pelo
 `workbench.colorCustomizations` (a API oficial de cores), então funciona por
 cima de qualquer tema e **só mexe em cor**: nenhum tamanho, fonte ou layout
 muda.

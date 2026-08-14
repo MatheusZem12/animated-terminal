@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.6
+
+- O fundo tingido de brasas estava lendo como marrom, não como brasa. Trocado
+  por vermelho translúcido (RGBA de opacidade baixa por cima do tema, em vez
+  do marrom sólido) na barra de título, activity bar, status bar e borda do
+  painel
+
 ## 0.7.5
 
 - Corrige a cor "piscando": a nova cor aparecia e, um instante depois,
