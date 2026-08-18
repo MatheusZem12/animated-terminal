@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.1
+
+- Mais silêncio entre um raio e outro: o ciclo do clarão da chuva dobrou (18s
+  para 36s, com os mesmos nove pontos), então passa perto de 4s de céu escuro
+  entre os piscas, contra 2s na 0.8.0. O pisca em si continua com ~0,45s — os
+  tempos de dentro dele são porcentagem do ciclo, e foram encolhidos na mesma
+  medida para não se arrastarem
+- Clarão bem maior: diâmetro entre 620 e 1040 px, contra 400 a 700. O brilho no
+  pico não mudou, então ele cobre mais céu sem clarear mais
+- Como o círculo é maior, dois piscas seguidos agora precisam de 28% de painel
+  entre eles (eram 22%) para não se sobrepor
+
 ## 0.8.0
 
 - O clarão da chuva não anda mais. Ele acendia num ponto e apagava em outro:

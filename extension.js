@@ -354,21 +354,27 @@ ${PAINEL}::before { animation: ta_respingos ${v(1.6)}s infinite; }
         // colado no topo, seja o terminal alto ou baixo); só o X é sorteado.
         // Diâmetro e brilho também variam, dentro de um mínimo e um máximo
         // fixos — nada de estouro forte, que cansa a vista.
-        const MIN_D = 400, MAX_D = 700;   // diâmetro do círculo, em px
+        const MIN_D = 620, MAX_D = 1040;  // diâmetro do círculo, em px
         const MIN_B = 0.20, MAX_B = 0.46; // brilho no pico do pisca
+        // o ciclo inteiro dura CICLO segundos e cabe um pisca por fatia, então
+        // dobrar o ciclo dobra o silêncio entre um raio e o outro (~4s na 0.8.1
+        // contra ~2s na 0.8.0). ESCALA encolhe os tempos de dentro do pisca na
+        // mesma medida: eles são % do ciclo, e sem isso o clarão que durava
+        // meio segundo passaria a se arrastar por um segundo inteiro.
+        const CICLO = 36, ESCALA = 18 / CICLO;
         const entre = (a, b) => a + Math.random() * (b - a);
         const pontos = [];
         for (let i = 0, x = 50; i < 9; i++) {
             // sorteia até cair longe do clarão anterior, senão dois piscas
             // seguidos saem quase no mesmo lugar e parece que ele ficou preso
             let novo = entre(10, 90);
-            for (let tenta = 0; Math.abs(novo - x) < 22 && tenta < 8; tenta++) {
+            for (let tenta = 0; Math.abs(novo - x) < 28 && tenta < 8; tenta++) {
                 novo = entre(10, 90);
             }
             x = novo;
             const tam = Math.round(entre(MIN_D, MAX_D));
             // em pouco mais da metade dos piscas o feixe desce junto; nos
-            // outros fica só a luz, senão vira raio a cada dois segundos
+            // outros fica só a luz, senão todo clarão viraria raio
             const feixe = Math.random() < 0.6;
             pontos.push({
                 x: x.toFixed(1),                      // eixo X: sorteado
@@ -387,7 +393,7 @@ ${PAINEL}::before { animation: ta_respingos ${v(1.6)}s infinite; }
         // ponto seguinte enquanto ainda estava aceso — era a "bola passando
         // pela tela" da 0.7.9. Agora o pulo acontece todo no escuro.
         const claroes = pontos.map((p, i) => {
-            const t = (n) => (i * passo + n).toFixed(2);
+            const t = (n) => (i * passo + n * ESCALA).toFixed(3);
             // as duas camadas (feixe e luz) dividem posição e tamanho, então
             // o raio nasce exatamente no meio do clarão. Sem feixe, a camada
             // de cima vai com tamanho zero e não desenha nada
@@ -432,7 +438,7 @@ ${CONTEUDO}::before {
     background-image: url("${u('chuva-raio.svg')}"), radial-gradient(circle closest-side, rgba(240,249,255,0.95) 0%, rgba(200,230,255,0.62) 28%, rgba(162,209,252,0.3) 52%, rgba(142,194,246,0.09) 76%, rgba(130,185,240,0) 100%);
     background-repeat: no-repeat;
     opacity: 0;
-    animation: ta_clarao ${v(18)}s linear infinite;
+    animation: ta_clarao ${v(CICLO)}s linear infinite;
 }
 @keyframes ta_clarao {${claroes}
     100% { opacity: 0; }
