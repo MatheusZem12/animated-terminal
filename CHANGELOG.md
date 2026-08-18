@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.7
+
+- O raio da chuva virou clarão. Em vez do feixe desenhado descendo pela tela
+  (que lia mais como um risco parado do que como um relâmpago), agora são só
+  luzes piscando no alto do painel: um estouro concentrado mais um véu que
+  lava a faixa de cima inteira, com pisca duplo e um resto de brilho depois.
+  Eles continuam trocando de lugar entre um estouro e outro
+- Os dois clarões são gradientes no próprio CSS — o `chuva-raio.svg` saiu do
+  pacote e a animação ficou só de opacidade, sem imagem para rasterizar
+
 ## 0.7.6
 
 - O fundo tingido de brasas estava lendo como marrom, não como brasa. Trocado

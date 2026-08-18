@@ -13,7 +13,7 @@ const TITULO = 35;
 
 const EFEITOS = {
     neve: { rotulo: '❄️  Neve', detalhe: 'Flocos com brilho caindo ao sabor do vento' },
-    chuva: { rotulo: '🌧️  Chuva', detalhe: 'Chuva em diagonal, raios e respingos no rio' },
+    chuva: { rotulo: '🌧️  Chuva', detalhe: 'Chuva em diagonal, clarões no céu e respingos no rio' },
     brasas: { rotulo: '🔥  Brasas', detalhe: 'Fagulhas subindo, fumaça e brasa acesa' }
 };
 
@@ -356,9 +356,12 @@ ${PAINEL}::before { animation: ta_respingos ${v(1.6)}s infinite; }
                 opacidade, 'ta_chuva_grossa', { diagonal: true }),
             completo && camada(`${CONTEUDO}::after`, u('chuva-b.svg'), 140, 460,
                 v(3.4), opacidade * 0.8, 'ta_chuva_fina', { diagonal: true }),
-            // o raio é uma imagem parada (feixe + clarão no céu); o susto vem
-            // da opacidade, que é barata, e ele muda de lugar entre um estouro
-            // e outro com a camada invisível — uma repintura por ciclo
+            // não tem mais feixe de raio: o susto agora são clarões piscando
+            // no alto da tela — dois gradientes no próprio CSS (um estouro
+            // concentrado e um véu que lava a faixa de cima inteira), sem
+            // imagem nenhuma. Eles trocam de lugar entre um estouro e outro
+            // enquanto estão apagados: uma repintura por ciclo, o resto do
+            // pisca-pisca é só opacidade, que é barata
             `
 ${CONTEUDO}::before {
     content: '';
@@ -368,26 +371,32 @@ ${CONTEUDO}::before {
     height: calc(100% - ${TITULO}px);
     pointer-events: none;
     z-index: 1000;
-    background-image: url("${u('chuva-raio.svg')}");
-    background-repeat: no-repeat;
-    background-size: auto 62%;
+    background-image:
+        radial-gradient(72% 100% at 50% 0%, rgba(233,246,255,0.92) 0%, rgba(158,209,255,0.34) 42%, rgba(120,180,240,0) 100%),
+        linear-gradient(to bottom, rgba(200,229,255,0.32) 0%, rgba(160,205,245,0.09) 45%, rgba(140,190,235,0) 100%);
+    background-repeat: no-repeat, no-repeat;
+    background-size: 78% 54%, 100% 36%;
+    background-position: 14% top, center top;
     opacity: 0;
-    animation: ta_raio ${v(13)}s linear infinite;
+    animation: ta_clarao ${v(11)}s linear infinite;
 }
-@keyframes ta_raio {
-    0% { opacity: 0; background-position: 24% top; }
-    38% { opacity: 0; }
-    39% { opacity: ${o(1.7)}; }
-    40.2% { opacity: 0.05; }
-    41.5% { opacity: ${o(1.2)}; }
-    43.5% { opacity: 0; }
-    64% { opacity: 0; background-position: 24% top; }
-    64.3% { background-position: 72% top; }
-    87% { opacity: 0; }
-    88% { opacity: ${o(1.6)}; }
-    89.3% { opacity: 0.04; }
-    90.6% { opacity: ${o(1.1)}; }
-    93%, 100% { opacity: 0; background-position: 72% top; }
+@keyframes ta_clarao {
+    0%, 17% { opacity: 0; background-position: 14% top, center top; }
+    18% { opacity: ${o(0.95)}; }
+    19.2% { opacity: ${o(0.15)}; }
+    20.4% { opacity: ${o(1.1)}; }
+    22% { opacity: ${o(0.3)}; }
+    24.5% { opacity: 0; }
+    45% { opacity: 0; background-position: 14% top, center top; }
+    45.5% { background-position: 66% top, center top; }
+    57% { opacity: 0; }
+    57.8% { opacity: ${o(0.8)}; }
+    58.6% { opacity: ${o(0.1)}; }
+    59.6% { opacity: ${o(1)}; }
+    61% { opacity: ${o(0.45)}; }
+    63% { opacity: ${o(0.7)}; }
+    66% { opacity: 0; }
+    100% { opacity: 0; background-position: 66% top, center top; }
 }`
         ].filter(Boolean).join('\n');
     }

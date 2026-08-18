@@ -5,7 +5,7 @@ Fundos animados para o painel do VS Code — sem transformar o editor em aqueced
 | Efeito | O que tem | Cores da interface |
 |---|---|---|
 | ❄️ Neve | Flocos com brilho em três profundidades caindo ao sabor do vento, cristais e neve acumulada embaixo | Cinza-gelo |
-| 🌧️ Chuva | Chuva em diagonal com traço de gota, raios com clarão que mudam de lugar e gotas respingando no rio em quatro tempos | Azul acinzentado |
+| 🌧️ Chuva | Chuva em diagonal com traço de gota, clarões piscando no alto do painel que mudam de lugar e gotas respingando no rio em quatro tempos | Azul acinzentado |
 | 🔥 Brasas | Fagulhas subindo, fumaça difusa e o brilho da braseira embaixo | Vermelho translúcido |
 
 ## Como usar
@@ -72,7 +72,7 @@ barato o bastante para ficar ligado até no modo `leve`.
 Os tiles têm emenda invisível: quem cruza a borda é duplicado do outro lado, e
 todo ciclo termina num deslocamento múltiplo exato do tile — a altura no eixo
 vertical e, no horizontal, a largura exata (queda diagonal da chuva) ou zero
-(o vaivém de vento da neve vai e volta). O vento e o clarão do raio também são
+(o vaivém de vento da neve vai e volta). O vento e os clarões do céu também são
 só `transform` e `opacity` — composição, sem repintura. Como o
 `background-size` é fixo em pixels, redimensionar o painel não rasteriza nada
 de novo.
