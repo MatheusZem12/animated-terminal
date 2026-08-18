@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.8
+
+- Conserta o clarão da chuva, que saía com pedaços faltando: em vez de um
+  brilho redondo, um retângulo cortado em linhas retas. A elipse do estouro
+  era mais larga que a caixa do gradiente, então ela ainda estava acesa ao
+  bater na borda e o `no-repeat` cortava ali. Agora ela cabe inteira na
+  caixa e o brilho apaga sozinho, sem emenda
+- O clarão também ficou mais alto e com decaimento mais macio: desce mais
+  no painel e o véu de cima ganhou paradas intermediárias
+
 ## 0.7.7
 
 - O raio da chuva virou clarão. Em vez do feixe desenhado descendo pela tela

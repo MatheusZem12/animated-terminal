@@ -361,7 +361,12 @@ ${PAINEL}::before { animation: ta_respingos ${v(1.6)}s infinite; }
             // concentrado e um véu que lava a faixa de cima inteira), sem
             // imagem nenhuma. Eles trocam de lugar entre um estouro e outro
             // enquanto estão apagados: uma repintura por ciclo, o resto do
-            // pisca-pisca é só opacidade, que é barata
+            // pisca-pisca é só opacidade, que é barata.
+            // A elipse do estouro TEM que caber no tile do background-size —
+            // raio de 50% da largura para 100% do tile. Com raio maior (a
+            // 0.7.7 usava 72%), ela ainda estava opaca ao chegar na borda do
+            // tile e o no-repeat cortava o brilho em linhas retas: o clarão
+            // aparecia como um retângulo com pedaços faltando
             `
 ${CONTEUDO}::before {
     content: '';
@@ -372,23 +377,23 @@ ${CONTEUDO}::before {
     pointer-events: none;
     z-index: 1000;
     background-image:
-        radial-gradient(72% 100% at 50% 0%, rgba(233,246,255,0.92) 0%, rgba(158,209,255,0.34) 42%, rgba(120,180,240,0) 100%),
-        linear-gradient(to bottom, rgba(200,229,255,0.32) 0%, rgba(160,205,245,0.09) 45%, rgba(140,190,235,0) 100%);
+        radial-gradient(50% 100% at 50% 0%, rgba(233,246,255,0.92) 0%, rgba(196,228,255,0.55) 22%, rgba(158,209,255,0.28) 45%, rgba(138,194,246,0.1) 70%, rgba(120,180,240,0) 100%),
+        linear-gradient(to bottom, rgba(200,229,255,0.3) 0%, rgba(170,212,248,0.12) 38%, rgba(150,197,240,0.03) 68%, rgba(140,190,235,0) 100%);
     background-repeat: no-repeat, no-repeat;
-    background-size: 78% 54%, 100% 36%;
-    background-position: 14% top, center top;
+    background-size: 68% 76%, 100% 52%;
+    background-position: 0% top, center top;
     opacity: 0;
     animation: ta_clarao ${v(11)}s linear infinite;
 }
 @keyframes ta_clarao {
-    0%, 17% { opacity: 0; background-position: 14% top, center top; }
+    0%, 17% { opacity: 0; background-position: 0% top, center top; }
     18% { opacity: ${o(0.95)}; }
     19.2% { opacity: ${o(0.15)}; }
     20.4% { opacity: ${o(1.1)}; }
     22% { opacity: ${o(0.3)}; }
     24.5% { opacity: 0; }
-    45% { opacity: 0; background-position: 14% top, center top; }
-    45.5% { background-position: 66% top, center top; }
+    45% { opacity: 0; background-position: 0% top, center top; }
+    45.5% { background-position: 100% top, center top; }
     57% { opacity: 0; }
     57.8% { opacity: ${o(0.8)}; }
     58.6% { opacity: ${o(0.1)}; }
@@ -396,7 +401,7 @@ ${CONTEUDO}::before {
     61% { opacity: ${o(0.45)}; }
     63% { opacity: ${o(0.7)}; }
     66% { opacity: 0; }
-    100% { opacity: 0; background-position: 66% top, center top; }
+    100% { opacity: 0; background-position: 100% top, center top; }
 }`
         ].filter(Boolean).join('\n');
     }
