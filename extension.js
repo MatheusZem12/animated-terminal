@@ -350,23 +350,41 @@ ${PAINEL}::before { animation: ta_respingos ${v(1.6)}s infinite; }
     50%, 74% { background-image: url("${u('chuva-chao-c.svg')}"); }
     75%, 100% { background-image: url("${u('chuva-chao-d.svg')}"); }
 }`;
+        // os pontos do clarão: quatro cantos, o meio e uns intermediários,
+        // em ordem salteada para não ler como um trajeto. Cada um vem com o
+        // seu diâmetro, então o estouro nunca sai do mesmo tamanho
+        const pontos = [
+            ['8% 16%', 320], ['92% 18%', 250], ['50% 48%', 380], ['12% 86%', 280],
+            ['70% 28%', 230], ['88% 84%', 330], ['30% 64%', 290]
+        ];
+        const passo = 100 / pontos.length;
+        // por ponto: pula para o lugar novo apagado, dá o pisca duplo do
+        // relâmpago e apaga de novo bem antes da vez do próximo
+        const claroes = pontos.map(([pos, tam], i) => {
+            const t = (n) => (i * passo + n).toFixed(2);
+            return `
+    ${t(0)}% { opacity: 0; background-position: ${pos}; background-size: ${tam}px ${tam}px; }
+    ${t(0.6)}% { opacity: ${o(0.95)}; }
+    ${t(1.4)}% { opacity: ${o(0.12)}; }
+    ${t(2.2)}% { opacity: ${o(1.1)}; }
+    ${t(3.6)}% { opacity: ${o(0.32)}; }
+    ${t(5.2)}% { opacity: 0; }`;
+        }).join('');
         return clip + [
             chao(u('chuva-chao-a.svg'), 96, opacidade) + respingos,
             camada(`${PAINEL}::after`, u('chuva-a.svg'), 160, 520, v(2.7),
                 opacidade, 'ta_chuva_grossa', { diagonal: true }),
             completo && camada(`${CONTEUDO}::after`, u('chuva-b.svg'), 140, 460,
                 v(3.4), opacidade * 0.8, 'ta_chuva_fina', { diagonal: true }),
-            // não tem mais feixe de raio: o susto agora são clarões piscando
-            // no alto da tela — dois gradientes no próprio CSS (um estouro
-            // concentrado e um véu que lava a faixa de cima inteira), sem
-            // imagem nenhuma. Eles trocam de lugar entre um estouro e outro
-            // enquanto estão apagados: uma repintura por ciclo, o resto do
-            // pisca-pisca é só opacidade, que é barata.
-            // A elipse do estouro TEM que caber no tile do background-size —
-            // raio de 50% da largura para 100% do tile. Com raio maior (a
-            // 0.7.7 usava 72%), ela ainda estava opaca ao chegar na borda do
-            // tile e o no-repeat cortava o brilho em linhas retas: o clarão
-            // aparecia como um retângulo com pedaços faltando
+            // sem feixe e sem véu: o susto agora é UM clarão redondo que
+            // pisca num canto ou no meio do painel e apaga. É um gradiente
+            // radial só, em caixa quadrada — o `circle` mantém ele redondo
+            // mesmo num painel largo e o `closest-side` faz a luz acabar
+            // antes da borda do tile, senão o `no-repeat` corta o brilho em
+            // linha reta (foi o bug consertado na 0.7.8).
+            // Entre um estouro e outro, com a luz apagada, o clarão pula para
+            // o próximo ponto (e muda de tamanho): uma repintura por pisca, o
+            // resto do pisca-pisca é só opacidade, que é barata.
             `
 ${CONTEUDO}::before {
     content: '';
@@ -376,32 +394,13 @@ ${CONTEUDO}::before {
     height: calc(100% - ${TITULO}px);
     pointer-events: none;
     z-index: 1000;
-    background-image:
-        radial-gradient(50% 100% at 50% 0%, rgba(233,246,255,0.92) 0%, rgba(196,228,255,0.55) 22%, rgba(158,209,255,0.28) 45%, rgba(138,194,246,0.1) 70%, rgba(120,180,240,0) 100%),
-        linear-gradient(to bottom, rgba(200,229,255,0.3) 0%, rgba(170,212,248,0.12) 38%, rgba(150,197,240,0.03) 68%, rgba(140,190,235,0) 100%);
-    background-repeat: no-repeat, no-repeat;
-    background-size: 68% 76%, 100% 52%;
-    background-position: 0% top, center top;
+    background-image: radial-gradient(circle closest-side, rgba(240,249,255,0.95) 0%, rgba(200,230,255,0.62) 28%, rgba(162,209,252,0.3) 52%, rgba(142,194,246,0.09) 76%, rgba(130,185,240,0) 100%);
+    background-repeat: no-repeat;
     opacity: 0;
-    animation: ta_clarao ${v(11)}s linear infinite;
+    animation: ta_clarao ${v(13)}s linear infinite;
 }
-@keyframes ta_clarao {
-    0%, 17% { opacity: 0; background-position: 0% top, center top; }
-    18% { opacity: ${o(0.95)}; }
-    19.2% { opacity: ${o(0.15)}; }
-    20.4% { opacity: ${o(1.1)}; }
-    22% { opacity: ${o(0.3)}; }
-    24.5% { opacity: 0; }
-    45% { opacity: 0; background-position: 0% top, center top; }
-    45.5% { background-position: 100% top, center top; }
-    57% { opacity: 0; }
-    57.8% { opacity: ${o(0.8)}; }
-    58.6% { opacity: ${o(0.1)}; }
-    59.6% { opacity: ${o(1)}; }
-    61% { opacity: ${o(0.45)}; }
-    63% { opacity: ${o(0.7)}; }
-    66% { opacity: 0; }
-    100% { opacity: 0; background-position: 100% top, center top; }
+@keyframes ta_clarao {${claroes}
+    100% { opacity: 0; }
 }`
         ].filter(Boolean).join('\n');
     }

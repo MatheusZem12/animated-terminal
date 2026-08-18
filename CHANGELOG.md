@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.9
+
+- O clarão da chuva virou um círculo só. O estouro largo mais o véu que lavava
+  a faixa de cima liam como um borrão descendo pela tela; agora é um único
+  brilho redondo com gradiente, que pisca num canto do painel, no meio ou em
+  um ponto qualquer entre eles, e apaga
+- São sete pontos em ordem salteada, cada um com o seu diâmetro, então dois
+  clarões seguidos nunca saem do mesmo lugar nem do mesmo tamanho
+
 ## 0.7.8
 
 - Conserta o clarão da chuva, que saía com pedaços faltando: em vez de um
