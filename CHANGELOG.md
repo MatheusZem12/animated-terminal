@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.8.0
+
+- O clarão da chuva não anda mais. Ele acendia num ponto e apagava em outro:
+  como `background-position` é animável, o círculo escorregava para o lugar do
+  próximo pisca ainda aceso, e lia como uma bola atravessando a tela. Agora a
+  posição é repetida no fim de cada fatia do keyframe, então o pulo acontece
+  todo no escuro e o brilho fica parado enquanto pisca
+- O eixo Y virou fixo: o clarão nasce sempre colado no topo do painel, com o
+  centro um pouco acima da borda, seja o terminal alto ou baixo. Só o X é
+  sorteado, a cada aplicação
+- Diâmetro entre 400 e 700 px e brilho entre 0,20 e 0,46 da opacidade — um
+  mínimo e um máximo fixos, para variar sem estourar. O pico caiu bastante em
+  relação à 0.7.9 (que chegava a 1,1× a opacidade): é para ser discreto
+- O feixe do raio voltou, agora desenhado dentro do próprio clarão: as duas
+  camadas (feixe e luz) usam a mesma caixa quadrada e a mesma posição, então o
+  raio sai sempre do meio do brilho. Como a posição é em porcentagem, a caixa
+  nunca sai do painel — nem a luz nem o feixe passam da largura do terminal
+- Ele não vem em todo pisca (uns 60%), e quando vem o pico sobe um pouco
+  (0,34 a 0,62), senão o desenho some dentro da luz
+- Cada pisca ficou mais curto: ~0,45s no ciclo de 18s, contra ~0,9s antes
+- Ciclo mais espaçado (18s para nove clarões) e sorteio que evita dois piscas
+  seguidos quase no mesmo X
+
 ## 0.7.9
 
 - O clarão da chuva virou um círculo só. O estouro largo mais o véu que lavava

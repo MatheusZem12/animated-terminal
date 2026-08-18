@@ -350,25 +350,58 @@ ${PAINEL}::before { animation: ta_respingos ${v(1.6)}s infinite; }
     50%, 74% { background-image: url("${u('chuva-chao-c.svg')}"); }
     75%, 100% { background-image: url("${u('chuva-chao-d.svg')}"); }
 }`;
-        // os pontos do clarão: quatro cantos, o meio e uns intermediários,
-        // em ordem salteada para não ler como um trajeto. Cada um vem com o
-        // seu diâmetro, então o estouro nunca sai do mesmo tamanho
-        const pontos = [
-            ['8% 16%', 320], ['92% 18%', 250], ['50% 48%', 380], ['12% 86%', 280],
-            ['70% 28%', 230], ['88% 84%', 330], ['30% 64%', 290]
-        ];
+        // O clarão é UM círculo parado no alto do painel. O Y é fixo (sempre
+        // colado no topo, seja o terminal alto ou baixo); só o X é sorteado.
+        // Diâmetro e brilho também variam, dentro de um mínimo e um máximo
+        // fixos — nada de estouro forte, que cansa a vista.
+        const MIN_D = 400, MAX_D = 700;   // diâmetro do círculo, em px
+        const MIN_B = 0.20, MAX_B = 0.46; // brilho no pico do pisca
+        const entre = (a, b) => a + Math.random() * (b - a);
+        const pontos = [];
+        for (let i = 0, x = 50; i < 9; i++) {
+            // sorteia até cair longe do clarão anterior, senão dois piscas
+            // seguidos saem quase no mesmo lugar e parece que ele ficou preso
+            let novo = entre(10, 90);
+            for (let tenta = 0; Math.abs(novo - x) < 22 && tenta < 8; tenta++) {
+                novo = entre(10, 90);
+            }
+            x = novo;
+            const tam = Math.round(entre(MIN_D, MAX_D));
+            // em pouco mais da metade dos piscas o feixe desce junto; nos
+            // outros fica só a luz, senão vira raio a cada dois segundos
+            const feixe = Math.random() < 0.6;
+            pontos.push({
+                x: x.toFixed(1),                      // eixo X: sorteado
+                y: -Math.round(tam * 0.38),           // eixo Y: preso no topo
+                tam,
+                feixe,
+                // com feixe o pico sobe um pouco: no brilho de sempre o
+                // desenho do raio quase não aparece
+                brilho: feixe ? entre(0.34, 0.62) : entre(MIN_B, MAX_B)
+            });
+        }
         const passo = 100 / pontos.length;
-        // por ponto: pula para o lugar novo apagado, dá o pisca duplo do
-        // relâmpago e apaga de novo bem antes da vez do próximo
-        const claroes = pontos.map(([pos, tam], i) => {
+        // por ponto: acende no lugar novo, dá o pisca duplo e apaga. A posição
+        // e o tamanho são repetidos no fim da fatia porque `background-position`
+        // é animável: sem essa parada o círculo escorregaria em direção ao
+        // ponto seguinte enquanto ainda estava aceso — era a "bola passando
+        // pela tela" da 0.7.9. Agora o pulo acontece todo no escuro.
+        const claroes = pontos.map((p, i) => {
             const t = (n) => (i * passo + n).toFixed(2);
+            // as duas camadas (feixe e luz) dividem posição e tamanho, então
+            // o raio nasce exatamente no meio do clarão. Sem feixe, a camada
+            // de cima vai com tamanho zero e não desenha nada
+            const caixa = `${p.tam}px ${p.tam}px`;
+            const lugar = `background-position: ${p.x}% ${p.y}px, ${p.x}% ${p.y}px;`
+                + ` background-size: ${p.feixe ? caixa : '0 0'}, ${caixa};`;
             return `
-    ${t(0)}% { opacity: 0; background-position: ${pos}; background-size: ${tam}px ${tam}px; }
-    ${t(0.6)}% { opacity: ${o(0.95)}; }
-    ${t(1.4)}% { opacity: ${o(0.12)}; }
-    ${t(2.2)}% { opacity: ${o(1.1)}; }
-    ${t(3.6)}% { opacity: ${o(0.32)}; }
-    ${t(5.2)}% { opacity: 0; }`;
+    ${t(0)}% { opacity: 0; ${lugar} }
+    ${t(0.25)}% { opacity: ${o(p.brilho * 0.7)}; }
+    ${t(0.60)}% { opacity: ${o(p.brilho * 0.25)}; }
+    ${t(1.00)}% { opacity: ${o(p.brilho)}; }
+    ${t(1.70)}% { opacity: ${o(p.brilho * 0.3)}; }
+    ${t(2.50)}% { opacity: 0; }
+    ${(i * passo + passo - 0.01).toFixed(2)}% { opacity: 0; ${lugar} }`;
         }).join('');
         return clip + [
             chao(u('chuva-chao-a.svg'), 96, opacidade) + respingos,
@@ -376,15 +409,17 @@ ${PAINEL}::before { animation: ta_respingos ${v(1.6)}s infinite; }
                 opacidade, 'ta_chuva_grossa', { diagonal: true }),
             completo && camada(`${CONTEUDO}::after`, u('chuva-b.svg'), 140, 460,
                 v(3.4), opacidade * 0.8, 'ta_chuva_fina', { diagonal: true }),
-            // sem feixe e sem véu: o susto agora é UM clarão redondo que
-            // pisca num canto ou no meio do painel e apaga. É um gradiente
-            // radial só, em caixa quadrada — o `circle` mantém ele redondo
-            // mesmo num painel largo e o `closest-side` faz a luz acabar
-            // antes da borda do tile, senão o `no-repeat` corta o brilho em
-            // linha reta (foi o bug consertado na 0.7.8).
-            // Entre um estouro e outro, com a luz apagada, o clarão pula para
-            // o próximo ponto (e muda de tamanho): uma repintura por pisca, o
-            // resto do pisca-pisca é só opacidade, que é barata.
+            // duas camadas na mesma caixa quadrada: o feixe desenhado por
+            // cima e, embaixo, o gradiente radial da luz — o `circle` mantém
+            // ele redondo mesmo num painel largo e o `closest-side` faz a luz
+            // acabar antes da borda do tile, senão o `no-repeat` corta o brilho
+            // em linha reta (bug consertado na 0.7.8). O centro fica um pouco
+            // acima da borda de cima, então o que aparece é o brilho (e o raio)
+            // descendo do topo. Como as duas camadas têm o mesmo tamanho e a
+            // mesma posição em %, o raio sai sempre do meio do clarão; e
+            // posição em % nunca joga a caixa para fora do painel, então nem a
+            // luz nem o feixe passam da largura do terminal. Uma repintura por
+            // pisca; o resto é opacidade, que é barata.
             `
 ${CONTEUDO}::before {
     content: '';
@@ -394,10 +429,10 @@ ${CONTEUDO}::before {
     height: calc(100% - ${TITULO}px);
     pointer-events: none;
     z-index: 1000;
-    background-image: radial-gradient(circle closest-side, rgba(240,249,255,0.95) 0%, rgba(200,230,255,0.62) 28%, rgba(162,209,252,0.3) 52%, rgba(142,194,246,0.09) 76%, rgba(130,185,240,0) 100%);
+    background-image: url("${u('chuva-raio.svg')}"), radial-gradient(circle closest-side, rgba(240,249,255,0.95) 0%, rgba(200,230,255,0.62) 28%, rgba(162,209,252,0.3) 52%, rgba(142,194,246,0.09) 76%, rgba(130,185,240,0) 100%);
     background-repeat: no-repeat;
     opacity: 0;
-    animation: ta_clarao ${v(13)}s linear infinite;
+    animation: ta_clarao ${v(18)}s linear infinite;
 }
 @keyframes ta_clarao {${claroes}
     100% { opacity: 0; }

@@ -1,8 +1,8 @@
 {
     "name": "terminal-animado",
     "displayName": "Terminal Animado",
-    "description": "Fundos animados para o terminal do VS Code: neve ao sabor do vento, chuva em diagonal com clarões no céu e respingos no rio, brasas com fagulhas subindo e fumaça. Animação por GPU, sem travar o editor.",
-    "version": "0.7.9",
+    "description": "Fundos animados para o terminal do VS Code: neve ao sabor do vento, chuva em diagonal com clarões e raios no céu e respingos no rio, brasas com fagulhas subindo e fumaça. Animação por GPU, sem travar o editor.",
+    "version": "0.8.0",
     "publisher": "matheuszem",
     "license": "MIT",
     "engines": {
