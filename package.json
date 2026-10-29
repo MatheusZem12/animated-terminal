@@ -1,8 +1,8 @@
 {
     "name": "terminal-animado",
-    "displayName": "Terminal Animado",
-    "description": "Fundos animados para o terminal do VS Code: neve ao sabor do vento, chuva em diagonal com clarões e raios no céu e respingos no rio, brasas com fagulhas subindo e fumaça. Animação por GPU, sem travar o editor.",
-    "version": "0.8.1",
+    "displayName": "Animated Terminal",
+    "description": "Animated backgrounds for the VS Code terminal: snow drifting with the wind, slanted rain with flashes and bolts in the sky and splashes on the river, embers with rising sparks and smoke. GPU animation, without freezing the editor.",
+    "version": "0.9.0",
     "publisher": "matheuszem",
     "license": "MIT",
     "engines": {
@@ -14,10 +14,10 @@
     ],
     "keywords": [
         "background",
-        "animado",
+        "animated",
         "terminal",
-        "neve",
-        "chuva"
+        "snow",
+        "rain"
     ],
     "galleryBanner": {
         "color": "#1F1F1F",
@@ -30,69 +30,94 @@
     "contributes": {
         "commands": [
             {
-                "command": "terminalAnimado.escolher",
-                "title": "Terminal Animado: Escolher Efeito"
+                "command": "terminalAnimado.chooseEffect",
+                "title": "Animated Terminal: Choose Effect"
             },
             {
-                "command": "terminalAnimado.remover",
-                "title": "Terminal Animado: Remover Efeito"
+                "command": "terminalAnimado.removeEffect",
+                "title": "Animated Terminal: Remove Effect"
             },
             {
-                "command": "terminalAnimado.alternarCores",
-                "title": "Terminal Animado: Ligar/Desligar Cores da Interface"
+                "command": "terminalAnimado.toggleColors",
+                "title": "Animated Terminal: Toggle Interface Colors"
             }
         ],
         "configuration": {
-            "title": "Terminal Animado",
+            "title": "Animated Terminal",
             "properties": {
-                "terminalAnimado.efeito": {
+                "terminalAnimado.effect": {
                     "type": "string",
                     "enum": [
-                        "nenhum",
-                        "neve",
-                        "chuva",
-                        "brasas"
+                        "none",
+                        "snow",
+                        "rain",
+                        "embers"
                     ],
                     "enumDescriptions": [
-                        "Sem fundo animado",
-                        "Flocos com brilho caindo ao sabor do vento, neve acumulada embaixo",
-                        "Chuva em diagonal, clarões piscando no céu e gotas respingando no rio",
-                        "Fagulhas subindo, fumaça e brasa acesa embaixo"
+                        "No animated background",
+                        "Glittering flakes drifting with the wind, snow piled up below",
+                        "Slanted rain, flashes in the sky and drops splashing on the river",
+                        "Rising sparks, smoke and glowing embers below"
                     ],
-                    "default": "nenhum",
-                    "description": "Efeito exibido no fundo do painel."
+                    "default": "none",
+                    "description": "Effect shown in the panel background."
                 },
-                "terminalAnimado.opacidade": {
+                "terminalAnimado.opacity": {
                     "type": "number",
                     "default": 0.5,
                     "minimum": 0.05,
                     "maximum": 1,
-                    "description": "Opacidade do efeito (0.05 = quase invisível, 1 = cheio)."
+                    "description": "Effect opacity (0.05 = almost invisible, 1 = full)."
                 },
-                "terminalAnimado.velocidade": {
+                "terminalAnimado.speed": {
                     "type": "number",
                     "default": 1,
                     "minimum": 0.25,
                     "maximum": 3,
-                    "description": "Multiplicador de velocidade das partículas."
+                    "description": "Particle speed multiplier."
                 },
-                "terminalAnimado.colorirInterface": {
+                "terminalAnimado.tintInterface": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Tinge as cores da interface (barras, botões, badges) para combinar com o efeito: brasas em vermelho translúcido, neve em cinza-gelo, chuva em azul acinzentado. Só cores — nenhum tamanho ou layout muda. Ao remover o efeito ou desligar isto, suas cores originais voltam."
+                    "description": "Tints the interface colors (bars, buttons, badges) to match the effect: embers in translucent red, snow in ice grey, rain in greyish blue. Colors only — no size or layout changes. When the effect is removed or this is turned off, your original colors come back."
+                },
+                "terminalAnimado.quality": {
+                    "type": "string",
+                    "enum": [
+                        "full",
+                        "light"
+                    ],
+                    "enumDescriptions": [
+                        "Every particle layer, with depth",
+                        "A single layer — lighter when resizing the panel"
+                    ],
+                    "default": "full",
+                    "description": "Number of animated layers."
+                },
+                "terminalAnimado.efeito": {
+                    "type": "string",
+                    "deprecationMessage": "Renamed in 0.9.0 — the value moves to `terminalAnimado.effect` automatically.",
+                    "description": "Renamed in 0.9.0 — the value moves to `terminalAnimado.effect` automatically."
+                },
+                "terminalAnimado.opacidade": {
+                    "type": "number",
+                    "deprecationMessage": "Renamed in 0.9.0 — the value moves to `terminalAnimado.opacity` automatically.",
+                    "description": "Renamed in 0.9.0 — the value moves to `terminalAnimado.opacity` automatically."
+                },
+                "terminalAnimado.velocidade": {
+                    "type": "number",
+                    "deprecationMessage": "Renamed in 0.9.0 — the value moves to `terminalAnimado.speed` automatically.",
+                    "description": "Renamed in 0.9.0 — the value moves to `terminalAnimado.speed` automatically."
                 },
                 "terminalAnimado.qualidade": {
                     "type": "string",
-                    "enum": [
-                        "completo",
-                        "leve"
-                    ],
-                    "enumDescriptions": [
-                        "Todas as camadas de partículas, com profundidade",
-                        "Uma camada só — mais leve ao redimensionar o painel"
-                    ],
-                    "default": "completo",
-                    "description": "Quantidade de camadas animadas."
+                    "deprecationMessage": "Renamed in 0.9.0 — the value moves to `terminalAnimado.quality` automatically.",
+                    "description": "Renamed in 0.9.0 — the value moves to `terminalAnimado.quality` automatically."
+                },
+                "terminalAnimado.colorirInterface": {
+                    "type": "boolean",
+                    "deprecationMessage": "Renamed in 0.9.0 — the value moves to `terminalAnimado.tintInterface` automatically.",
+                    "description": "Renamed in 0.9.0 — the value moves to `terminalAnimado.tintInterface` automatically."
                 }
             }
         }

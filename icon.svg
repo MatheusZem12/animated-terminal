@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="fundo" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="back" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#252525"/>
       <stop offset="1" stop-color="#161616"/>
     </linearGradient>
-    <linearGradient id="neve" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="snow" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0.10"/>
     </linearGradient>
   </defs>
 
-  <rect width="128" height="128" rx="26" fill="url(#fundo)"/>
+  <rect width="128" height="128" rx="26" fill="url(#back)"/>
 
-  <!-- flocos ao fundo -->
+  <!-- flakes in the back -->
   <g fill="#ffffff">
     <circle cx="22" cy="20" r="2.1" opacity="0.55"/>
     <circle cx="52" cy="13" r="1.5" opacity="0.4"/>
@@ -22,9 +22,9 @@
     <circle cx="115" cy="52" r="1.4" opacity="0.3"/>
   </g>
 
-  <!-- neve acumulada -->
+  <!-- piled snow -->
   <path d="M0,104 Q22,92 44,101 Q68,110 90,99 Q110,90 128,100 L128,128 L0,128 Z"
-        fill="url(#neve)"/>
+        fill="url(#snow)"/>
 
   <!-- terminal -->
   <g transform="translate(39,43)">

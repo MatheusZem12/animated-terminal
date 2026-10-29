@@ -1,98 +1,103 @@
-# Terminal Animado
+# Animated Terminal
 
-Fundos animados para o painel do VS Code — sem transformar o editor em aquecedor.
+Animated backgrounds for the VS Code panel — without turning the editor into a space heater.
 
-| Efeito | O que tem | Cores da interface |
+| Effect | What it has | Interface colors |
 |---|---|---|
-| ❄️ Neve | Flocos com brilho em três profundidades caindo ao sabor do vento, cristais e neve acumulada embaixo | Cinza-gelo |
-| 🌧️ Chuva | Chuva em diagonal com traço de gota, clarões piscando no alto do painel que mudam de lugar, com feixe de raio saindo do meio da luz, e gotas respingando no rio em quatro tempos | Azul acinzentado |
-| 🔥 Brasas | Fagulhas subindo, fumaça difusa e o brilho da braseira embaixo | Vermelho translúcido |
+| ❄️ Snow | Glittering flakes at three depths drifting with the wind, crystals and snow piled up below | Ice grey |
+| 🌧️ Rain | Slanted rain with drop trails, flashes flickering at the top of the panel that change place, with a lightning bolt coming out of the middle of the light, and drops splashing on the river in four beats | Greyish blue |
+| 🔥 Embers | Rising sparks, diffuse smoke and the glow of the embers below | Translucent red |
 
-## Como usar
+## Usage
 
-`Ctrl+Shift+P` → **Terminal Animado: Escolher Efeito** → recarregue a janela.
+`Ctrl+Shift+P` → **Animated Terminal: Choose Effect** → reload the window once.
 
-Para tirar: **Terminal Animado: Remover Efeito**.
+To take it off: **Animated Terminal: Remove Effect**.
 
-Para ligar ou desligar só as cores da interface, mantendo a animação:
-**Terminal Animado: Ligar/Desligar Cores da Interface**.
+To turn only the interface colors on or off, keeping the animation:
+**Animated Terminal: Toggle Interface Colors**.
 
-## Configurações
+## Settings
 
-| Chave | Padrão | O que faz |
+| Key | Default | What it does |
 |---|---|---|
-| `terminalAnimado.efeito` | `nenhum` | `neve`, `chuva`, `brasas` ou `nenhum` |
-| `terminalAnimado.opacidade` | `0.5` | De `0.05` (fantasma) a `1` (cheio) |
-| `terminalAnimado.velocidade` | `1` | Multiplicador — `0.5` é lento, `2` é rápido |
-| `terminalAnimado.colorirInterface` | `true` | Tinge barras, botões e badges na cor do efeito |
+| `terminalAnimado.effect` | `none` | `snow`, `rain`, `embers` or `none` |
+| `terminalAnimado.opacity` | `0.5` | From `0.05` (ghost) to `1` (full) |
+| `terminalAnimado.speed` | `1` | A multiplier — `0.5` is slow, `2` is fast |
+| `terminalAnimado.quality` | `full` | `light` keeps a single animated layer |
+| `terminalAnimado.tintInterface` | `true` | Tints bars, buttons and badges in the effect's color |
 
-## Cores da interface
+Up to 0.8.1 these keys had Portuguese names (`efeito`, `opacidade`, `velocidade`, `qualidade`, `colorirInterface`) and values (`neve`, `chuva`, `brasas`, `nenhum`, `completo`, `leve`). 0.9.0 moves them to the new keys on its own the first time it starts.
 
-Com um efeito ativo, a extensão tinge a interface para combinar — em tons
-médios e discretos de propósito, para sugerir o efeito sem gritar em cima de
-nenhum tema: brasas em vermelho translúcido (RGBA de opacidade baixa, para
-não virar um marrom sólido), neve em cinza-gelo (nunca branco puro), chuva em
-azul acinzentado. Isso é feito pelo
-`workbench.colorCustomizations` (a API oficial de cores), então funciona por
-cima de qualquer tema e **só mexe em cor**: nenhum tamanho, fonte ou layout
-muda.
+## Interface colors
 
-O valor original de cada cor é guardado antes de ser sobrescrito. Ao escolher
-"Nenhum" (ou desligar `colorirInterface`), a sua configuração volta exatamente
-como era. Se for desinstalar a extensão com um efeito ativo, remova o efeito
-antes — desinstalada, ela não tem como rodar a restauração.
+With an effect on, the extension tints the interface to match — in mid,
+discreet tones on purpose, to hint at the effect without shouting over any
+theme: embers in translucent red (low-opacity RGBA, so it doesn't turn into
+solid brown), snow in ice grey (never pure white), rain in greyish blue. It is
+done through `workbench.colorCustomizations` (the official colors API), so it
+works on top of any theme and **only touches colors**: no size, font or layout
+changes.
 
-## Por que é leve
+The original value of each color is stored before it is overwritten. When you
+pick "None" (or turn off `tintInterface`), your configuration comes back
+exactly as it was. If you are going to uninstall the extension with an effect
+on, remove the effect first — once uninstalled, it has no way to run the
+restore.
 
-A primeira versão animava dentro do SVG. Parece a escolha óbvia, mas quando um
-SVG é usado como imagem de fundo, o navegador **redesenha a imagem inteira a
-cada quadro** — e o custo não vem da quantidade de partículas, vem do simples
-fato de existir animação. Medido no Chromium (headless, render por software,
-painel de 1500x350 — números altos por não ter GPU, mas comparáveis entre si):
+## Why it is light
 
-| O que está na tela | Custo |
+The first version animated inside the SVG. It looks like the obvious choice,
+but when an SVG is used as a background image, the browser **repaints the
+whole image on every frame** — and the cost doesn't come from the number of
+particles, it comes from the mere existence of an animation. Measured in
+Chromium (headless, software rendering, a 1500x350 panel — high numbers for
+lack of a GPU, but comparable to each other):
+
+| What is on screen | Cost |
 |---|---|
-| Página vazia | 1,0% de um núcleo |
-| Camada estática, sem animação | 1,1% |
-| Chão da neve (estático) | 1,3% |
-| Rio com anéis animados dentro do SVG | 62,3% |
-| Camada movida por `transform` no CSS | ~23% |
+| Empty page | 1.0% of a core |
+| Static layer, no animation | 1.1% |
+| Snow ground (static) | 1.3% |
+| River with rings animated inside the SVG | 62.3% |
+| Layer moved by `transform` in CSS | ~23% |
 
-Daí as duas decisões da arquitetura: **nenhum SVG tem animação dentro** (todos
-são estáticos, rasterizados uma vez) e o movimento vem de `transform` no CSS,
-que é trabalho de composição — barato de verdade quando há GPU, que é o caso do
-VS Code de verdade. Desenhos parados (neve acumulada, brasa) saem de graça.
+Hence the two architecture decisions: **no SVG has an animation inside** (they
+are all static, rasterized once) and movement comes from `transform` in CSS,
+which is compositing work — truly cheap when there's a GPU, which is the case
+for the real VS Code. Still drawings (piled snow, embers) come for free.
 
-Os respingos da chuva no rio são quatro quadros estáticos revezados por
-`@keyframes` na imagem de fundo (impacto, coroa, anel, dissipação): cada troca
-é discreta (~2,5 repinturas por segundo na faixa do rio), nada a ver com os
-60 quadros por segundo da animação interna que a tabela acima aposentou —
-barato o bastante para ficar ligado até no modo `leve`.
+The rain splashes on the river are four static frames taking turns through
+`@keyframes` on the background image (impact, crown, ring, fade): each swap is
+discrete (~2.5 repaints per second on the river strip), nothing like the 60
+frames per second of the inner animation the table above retired — cheap
+enough to stay on even in `light` mode.
 
-Os tiles têm emenda invisível: quem cruza a borda é duplicado do outro lado, e
-todo ciclo termina num deslocamento múltiplo exato do tile — a altura no eixo
-vertical e, no horizontal, a largura exata (queda diagonal da chuva) ou zero
-(o vaivém de vento da neve vai e volta). O vento e os clarões do céu também são
-só `transform` e `opacity` — composição, sem repintura. Como o
-`background-size` é fixo em pixels, redimensionar o painel não rasteriza nada
-de novo.
+The tiles have an invisible seam: whatever crosses the edge is duplicated on
+the other side, and every cycle ends at an exact multiple of the tile — the
+height on the vertical axis and, on the horizontal one, the exact width (the
+rain's diagonal fall) or zero (the snow's wind sway goes back and forth). The
+wind and the sky flashes are also just `transform` and `opacity` — compositing,
+no repaint. Since `background-size` is fixed in pixels, resizing the panel
+rasterizes nothing new.
 
-Se ainda pesar na sua máquina, `terminalAnimado.qualidade: "leve"` deixa uma
-camada animada só — cerca de metade do custo.
+If it is still heavy on your machine, `terminalAnimado.quality: "light"` keeps a
+single animated layer — about half the cost.
 
-## Como funciona por dentro
+## How it works inside
 
-O VS Code não deixa extensão injetar CSS no workbench, então a extensão
-acrescenta um bloco delimitado por marcadores no
-`workbench.desktop.main.css` da instalação. Consequências:
+VS Code doesn't let an extension inject CSS into the workbench, so the
+extension appends a small loader, delimited by markers, to the installation's
+`workbench.desktop.main.js`. The loader rereads a CSS file from the extension's
+global storage every second, so switching effects applies live. Consequences:
 
-- Na primeira vez o VS Code avisa que **a instalação parece corrompida** — é
-  esperado; dispense o aviso.
-- É preciso ter permissão de escrita na pasta do VS Code. Sem ela, a extensão
-  mostra o comando `chown` a ser executado.
-- Toda atualização do VS Code apaga o bloco; a extensão detecta e reaplica
-  sozinha na inicialização seguinte.
+- The first time, VS Code warns that **the installation seems corrupt** — this
+  is expected; the extension hides that specific notification.
+- It needs write permission on the VS Code folder. Without it, the extension
+  shows the `chown` command to run.
+- Every VS Code update wipes the loader; the extension detects it and puts it
+  back on the next start (asking for one reload).
 
-## Licença
+## License
 
 MIT

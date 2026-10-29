@@ -2,39 +2,97 @@ const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
 
-const MARCA_INICIO = '/* terminal-animado:inicio */';
-const MARCA_FIM = '/* terminal-animado:fim */';
+// These markers live inside VS Code's own workbench files, written by every
+// version so far. They stay in Portuguese on purpose: changing them would make
+// this version unable to find (and replace) the block an older one left there.
+const START_MARK = '/* terminal-animado:inicio */';
+const END_MARK = '/* terminal-animado:fim */';
 
-const PAINEL = '.monaco-workbench .split-view-view > .part.panel';
-const CONTEUDO = PAINEL + ' > .content';
-// altura da barra de abas do painel (Problems/Output/Terminal): os efeitos
-// começam abaixo dela, para não chover em cima das abas
-const TITULO = 35;
+const PANEL = '.monaco-workbench .split-view-view > .part.panel';
+const CONTENT = PANEL + ' > .content';
+// height of the panel tab bar (Problems/Output/Terminal): the effects start
+// below it, so it doesn't rain on top of the tabs
+const TITLE = 35;
 
-const EFEITOS = {
-    neve: { rotulo: '❄️  Neve', detalhe: 'Flocos com brilho caindo ao sabor do vento' },
-    chuva: { rotulo: '🌧️  Chuva', detalhe: 'Chuva em diagonal, clarões no céu e respingos no rio' },
-    brasas: { rotulo: '🔥  Brasas', detalhe: 'Fagulhas subindo, fumaça e brasa acesa' }
+const EFFECTS = {
+    snow: { label: '❄️  Snow', detail: 'Glittering flakes drifting with the wind' },
+    rain: { label: '🌧️  Rain', detail: 'Slanted rain, flashes in the sky and splashes on the river' },
+    embers: { label: '🔥  Embers', detail: 'Rising sparks, smoke and glowing embers' }
 };
 
-// ─── Cores da interface ──────────────────────────────────────────────────────
-// Tinge a interface para combinar com o efeito, via workbench.colorCustomizations
-// (API oficial: aplica ao vivo, por cima de qualquer tema, e remover restaura o
-// tema exato). Só chaves de COR — nada de tamanho, fonte ou layout. O valor
-// original de cada chave é guardado no globalState na primeira vez que ela é
-// tocada e devolvido quando ela sai de cena, então a configuração do usuário
-// volta intacta ao remover o efeito ou desligar `colorirInterface`.
+// ─── Settings ───────────────────────────────────────────────────────────────
+// Up to 0.8.1 the settings had Portuguese names and values. They are still
+// declared in package.json (as deprecated) only so this version can move their
+// values to the new keys and then clear them — VS Code refuses to write a key
+// that isn't registered.
 
-const CHAVE_BACKUP = 'coresOriginais';
+const LEGACY_KEYS = {
+    effect: 'efeito',
+    opacity: 'opacidade',
+    speed: 'velocidade',
+    quality: 'qualidade',
+    tintInterface: 'colorirInterface'
+};
 
-// Tons médios e dessaturados de propósito: escuro demais (as versões
-// anteriores de chuva e brasas) pesa a interface inteira, e branco puro (a
-// neve original) destoa de qualquer tema escuro. A meta é "disfarçado" — a
-// cor sugere o efeito sem gritar, inclusive na barra de baixo.
-const PALETAS = {
-    brasas: {
-        // fundos em vermelho translúcido (RGBA sobre o tema, opacidade baixa
-        // de propósito) — a versão sólida anterior lia como marrom, não brasa
+const LEGACY_VALUES = {
+    effect: { nenhum: 'none', neve: 'snow', chuva: 'rain', brasas: 'embers' },
+    quality: { completo: 'full', leve: 'light' }
+};
+
+function fromLegacy(key, value) {
+    const map = LEGACY_VALUES[key];
+    return map && value in map ? map[value] : value;
+}
+
+/** A set value of `key`, falling back to its legacy key while it hasn't been migrated yet. */
+function setting(cfg, key, fallback) {
+    const own = cfg.inspect(key);
+    const value = own && (own.workspaceFolderValue ?? own.workspaceValue ?? own.globalValue);
+    if (value !== undefined) return value;
+    const legacy = cfg.inspect(LEGACY_KEYS[key]);
+    const old = legacy && (legacy.workspaceFolderValue ?? legacy.workspaceValue ?? legacy.globalValue);
+    return old !== undefined ? fromLegacy(key, old) : fallback;
+}
+
+/** Moves the global values of the legacy keys to the new ones, then clears the old ones. */
+async function migrateLegacySettings() {
+    const cfg = vscode.workspace.getConfiguration('terminalAnimado');
+    for (const [key, legacyKey] of Object.entries(LEGACY_KEYS)) {
+        const old = cfg.inspect(legacyKey)?.globalValue;
+        if (old === undefined) continue;
+        try {
+            if (cfg.inspect(key)?.globalValue === undefined) {
+                await cfg.update(key, fromLegacy(key, old), vscode.ConfigurationTarget.Global);
+            }
+            await cfg.update(legacyKey, undefined, vscode.ConfigurationTarget.Global);
+        } catch (_) {
+            // updated without a reload: the window only registers the new keys
+            // after reloading. Reading falls back to the legacy key meanwhile,
+            // and the next activation tries again.
+        }
+    }
+}
+
+// ─── Interface colors ───────────────────────────────────────────────────────
+// Tints the interface to match the effect, via workbench.colorCustomizations
+// (the official API: it applies live, on top of any theme, and removing it
+// restores the exact theme). Only COLOR keys — no size, font or layout. The
+// original value of each key is stored in globalState the first time it is
+// touched and given back when it leaves the scene, so the user's configuration
+// comes back intact when the effect is removed or `tintInterface` is turned off.
+
+// The globalState key holding the user's original colors. Its value predates
+// the English rewrite and must stay as it is, or the backup would be lost.
+const BACKUP_KEY = 'coresOriginais';
+
+// Mid, desaturated tones on purpose: too dark (the earlier rain and embers
+// versions) weighs down the whole interface, and pure white (the original
+// snow) clashes with any dark theme. The goal is "disguised" — the color
+// hints at the effect without shouting, including on the bottom bar.
+const PALETTES = {
+    embers: {
+        // backgrounds in translucent red (RGBA over the theme, low opacity on
+        // purpose) — the earlier solid version read as brown, not embers
         'titleBar.activeBackground': '#c42a2a2e',
         'titleBar.activeForeground': '#f3ddc9',
         'titleBar.inactiveBackground': '#c42a2a22',
@@ -60,7 +118,7 @@ const PALETAS = {
         'panel.border': '#c42a2a40',
         'terminal.tab.activeBorder': '#d97b45'
     },
-    neve: {
+    snow: {
         'titleBar.activeBackground': '#3c4046',
         'titleBar.activeForeground': '#e4e7ea',
         'titleBar.inactiveBackground': '#33363b',
@@ -86,7 +144,7 @@ const PALETAS = {
         'panel.border': '#494d53',
         'terminal.tab.activeBorder': '#8ab0cc'
     },
-    chuva: {
+    rain: {
         'titleBar.activeBackground': '#213445',
         'titleBar.activeForeground': '#d3e6f5',
         'titleBar.inactiveBackground': '#1b2b39',
@@ -114,14 +172,14 @@ const PALETAS = {
     }
 };
 
-// Cores das paletas de versões antigas, por chave: fazem parte do conjunto
-// "reconhecidamente nosso" para a varredura de resíduo abaixo conseguir
-// limpar sobras de qualquer época — inclusive a paleta 0.7.0–0.7.2 (escura
-// demais em brasas/chuva, branca em neve) que esta versão substitui. Cada
-// lista segue [0.6.0, 0.7.0–0.7.2] com brasas/neve/chuva em sequência; os
-// fundos de brasas 0.7.3–0.7.5 (marrom sólido, trocado por vermelho
-// translúcido) entram soltos no fim de cada lista que mudou.
-const CORES_LEGADAS = {
+// Palette colors from older versions, per key: they belong to the "known to
+// be ours" set so the leftover sweep below can clean up remains from any
+// era — including the 0.7.0–0.7.2 palette (too dark for embers/rain, white
+// for snow) that this version replaces. Each list follows [0.6.0, 0.7.0–0.7.2]
+// with embers/snow/rain in sequence; the 0.7.3–0.7.5 embers backgrounds
+// (solid brown, replaced by translucent red) come loose at the end of each
+// list that changed.
+const LEGACY_COLORS = {
     'titleBar.activeBackground': ['#5a1412', '#e8edf3', '#10304d', '#331008', '#eef3f9', '#0c1f33', '#3d2a20'],
     'titleBar.activeForeground': ['#ffe3d9', '#3b4552', '#d3e7f8', '#ffe8d6', '#2e3a48', '#d6eafc'],
     'titleBar.inactiveBackground': ['#401210', '#d5dce5', '#0c2237', '#220b06', '#dde5ee', '#081522', '#332019'],
@@ -148,159 +206,160 @@ const CORES_LEGADAS = {
     'terminal.tab.activeBorder': ['#ff8c42', '#38bdf8', '#4db2ff']
 };
 
-// Tudo que a extensão já escreveu algum dia, como "chave=cor": é o que separa
-// resíduo nosso de customização legítima do usuário.
-const CORES_NOSSAS = (() => {
-    const conjunto = new Set();
-    for (const paleta of Object.values(PALETAS)) {
-        for (const [chave, cor] of Object.entries(paleta)) {
-            conjunto.add(`${chave}=${cor.toLowerCase()}`);
+// Everything the extension has ever written, as "key=color": it is what tells
+// our leftovers apart from the user's legitimate customization.
+const OUR_COLORS = (() => {
+    const set = new Set();
+    for (const palette of Object.values(PALETTES)) {
+        for (const [key, color] of Object.entries(palette)) {
+            set.add(`${key}=${color.toLowerCase()}`);
         }
     }
-    for (const [chave, cores] of Object.entries(CORES_LEGADAS)) {
-        for (const cor of cores) conjunto.add(`${chave}=${cor}`);
+    for (const [key, colors] of Object.entries(LEGACY_COLORS)) {
+        for (const color of colors) set.add(`${key}=${color}`);
     }
-    return conjunto;
+    return set;
 })();
 
-const CHAVES_NOSSAS = (() => {
-    const conjunto = new Set(Object.keys(CORES_LEGADAS));
-    for (const paleta of Object.values(PALETAS)) {
-        for (const chave of Object.keys(paleta)) conjunto.add(chave);
+const OUR_KEYS = (() => {
+    const set = new Set(Object.keys(LEGACY_COLORS));
+    for (const palette of Object.values(PALETTES)) {
+        for (const key of Object.keys(palette)) set.add(key);
     }
-    return conjunto;
+    return set;
 })();
 
-function ehCorNossa(chave, valor) {
-    return typeof valor === 'string'
-        && CORES_NOSSAS.has(`${chave}=${valor.toLowerCase()}`);
+function isOurColor(key, value) {
+    return typeof value === 'string'
+        && OUR_COLORS.has(`${key}=${value.toLowerCase()}`);
 }
 
 /**
- * Leva o colorCustomizations global até a paleta pedida ({} = restaurar tudo):
- * chaves que saem de cena voltam ao valor original (null = não existia) e cada
- * chave nova é salva no backup antes de ser sobrescrita. Trocar neve→chuva não
- * regrava o backup — ele sempre guarda o valor de ANTES do primeiro toque.
+ * Brings the global colorCustomizations to the requested palette ({} = restore
+ * everything): keys leaving the scene go back to their original value (null =
+ * it didn't exist) and each new key is saved in the backup before being
+ * overwritten. Switching snow→rain doesn't rewrite the backup — it always
+ * holds the value from BEFORE the first touch.
  *
- * Duas defesas contra resíduo (interface presa na cor de um efeito antigo):
- * uma cor NOSSA nunca entra no backup como "original" — com duas janelas
- * abertas, as duas aplicam ao mesmo tempo e uma podia guardar como original a
- * cor que a outra tinha acabado de escrever, e restaurar isso devolvia a
- * paleta velha — e toda aplicação varre as chaves que já foram nossas e
- * remove qualquer valor reconhecidamente nosso fora da paleta atual, mesmo
- * sem backup.
+ * Two defenses against leftovers (the interface stuck in an old effect's
+ * color): one of OUR colors never enters the backup as "original" — with two
+ * windows open, both apply at the same time and one could store as original
+ * the color the other had just written, and restoring that gave back the old
+ * palette — and every application sweeps the keys that were ever ours and
+ * removes any value known to be ours outside the current palette, even
+ * without a backup.
  */
-async function aplicarCores(context, paleta) {
+async function applyColors(context, palette) {
     const cfg = vscode.workspace.getConfiguration('workbench');
-    const atual = { ...(cfg.inspect('colorCustomizations')?.globalValue || {}) };
-    const originais = { ...(context.globalState.get(CHAVE_BACKUP) || {}) };
-    const antesAtual = JSON.stringify(atual);
-    const antesOriginais = JSON.stringify(originais);
+    const current = { ...(cfg.inspect('colorCustomizations')?.globalValue || {}) };
+    const originals = { ...(context.globalState.get(BACKUP_KEY) || {}) };
+    const currentBefore = JSON.stringify(current);
+    const originalsBefore = JSON.stringify(originals);
 
-    for (const chave of Object.keys(originais)) {
-        if (chave in paleta) continue;
-        if (originais[chave] === null || ehCorNossa(chave, originais[chave])) {
-            delete atual[chave];
+    for (const key of Object.keys(originals)) {
+        if (key in palette) continue;
+        if (originals[key] === null || isOurColor(key, originals[key])) {
+            delete current[key];
         } else {
-            atual[chave] = originais[chave];
+            current[key] = originals[key];
         }
-        delete originais[chave];
+        delete originals[key];
     }
-    // varredura de resíduo: limpa o que é nosso e ficou órfão de backup
-    for (const chave of CHAVES_NOSSAS) {
-        if (!(chave in paleta) && ehCorNossa(chave, atual[chave])) {
-            delete atual[chave];
+    // leftover sweep: clears what is ours and was orphaned from the backup
+    for (const key of OUR_KEYS) {
+        if (!(key in palette) && isOurColor(key, current[key])) {
+            delete current[key];
         }
     }
-    for (const [chave, cor] of Object.entries(paleta)) {
-        if (!(chave in originais)) {
-            originais[chave] = chave in atual && !ehCorNossa(chave, atual[chave])
-                ? atual[chave] : null;
+    for (const [key, color] of Object.entries(palette)) {
+        if (!(key in originals)) {
+            originals[key] = key in current && !isOurColor(key, current[key])
+                ? current[key] : null;
         }
-        atual[chave] = cor;
+        current[key] = color;
     }
 
     try {
-        if (JSON.stringify(atual) !== antesAtual) {
+        if (JSON.stringify(current) !== currentBefore) {
             await cfg.update('colorCustomizations',
-                Object.keys(atual).length ? atual : undefined,
+                Object.keys(current).length ? current : undefined,
                 vscode.ConfigurationTarget.Global);
         }
-        if (JSON.stringify(originais) !== antesOriginais) {
-            await context.globalState.update(CHAVE_BACKUP,
-                Object.keys(originais).length ? originais : undefined);
+        if (JSON.stringify(originals) !== originalsBefore) {
+            await context.globalState.update(BACKUP_KEY,
+                Object.keys(originals).length ? originals : undefined);
         }
     } catch (_) {
-        // settings.json indisponível: a próxima troca de efeito tenta de novo
+        // settings.json unavailable: the next effect switch tries again
     }
 }
 
-/** O sandbox do VS Code bloqueia file://; arquivos locais usam vscode-file://. */
-function urlDe(context, arquivo) {
-    return `vscode-file://vscode-app${path.join(context.extensionPath, 'media', arquivo)}`;
+/** VS Code's sandbox blocks file://; local files use vscode-file://. */
+function urlOf(context, file) {
+    return `vscode-file://vscode-app${path.join(context.extensionPath, 'media', file)}`;
 }
 
 /**
- * Camada de partículas: o SVG é estático (rasterizado uma vez) e quem se mexe
- * é a camada inteira, via transform — trabalho de composição, sem redesenho.
- * A emenda nunca aparece porque todo ciclo termina num deslocamento múltiplo
- * do tile: a altura exata no eixo Y e, no X, ou a largura exata (queda em
- * `diagonal`, para a chuva) ou zero (o `balanco` de vento da neve e das
- * brasas vai e volta, com folga lateral para o recorte não expor a borda).
+ * A particle layer: the SVG is static (rasterized once) and what moves is the
+ * whole layer, via transform — compositing work, with no repaint. The seam
+ * never shows because every cycle ends at a multiple of the tile: the exact
+ * height on the Y axis and, on X, either the exact width (a `diagonal` fall,
+ * for the rain) or zero (the wind `sway` of the snow and the embers goes back
+ * and forth, with side slack so the clipping doesn't expose the edge).
  */
-function camada(seletor, url, larg, alt, dur, opacidade, nome, opts = {}) {
-    const { subindo = false, diagonal = false, balanco = 0, fase = 1, z = 1000 } = opts;
-    const alvoY = subindo ? -alt : alt;
-    const dx = diagonal ? -larg : 0;
-    // camada presa abaixo da barra de abas, com uma folga do tamanho do tile
-    // na direção do movimento (recortada pelo overflow:hidden do painel)
-    const topo = subindo ? `${TITULO}px` : `calc(${TITULO}px - ${alt}px)`;
-    const esq = balanco ? balanco + 6 : 0;
-    const dir = balanco ? balanco + 6 : -dx;
+function layer(selector, url, width, height, dur, opacity, name, opts = {}) {
+    const { rising = false, diagonal = false, sway = 0, phase = 1, z = 1000 } = opts;
+    const targetY = rising ? -height : height;
+    const dx = diagonal ? -width : 0;
+    // a layer pinned below the tab bar, with slack the size of the tile in
+    // the direction of movement (clipped by the panel's overflow:hidden)
+    const top = rising ? `${TITLE}px` : `calc(${TITLE}px - ${height}px)`;
+    const left = sway ? sway + 6 : 0;
+    const right = sway ? sway + 6 : -dx;
 
-    let quadros;
-    if (balanco) {
-        // vaivém de vento: o X percorre uma senoide amostrada e o Y avança
-        // linear em TODOS os quadros — qualquer easing aqui seguraria a
-        // queda junto com o balanço e a animação pareceria estancar
-        const N = 8, arred = (v) => Math.round(v * 10) / 10;
-        const passos = [];
+    let frames;
+    if (sway) {
+        // wind sway: X follows a sampled sine and Y advances linearly in ALL
+        // frames — any easing here would hold the fall back along with the
+        // sway and the animation would seem to stall
+        const N = 8, round = (v) => Math.round(v * 10) / 10;
+        const steps = [];
         for (let k = 0; k <= N; k++) {
-            const x = arred(fase * balanco * Math.sin(2 * Math.PI * k / N));
-            const y = arred(alvoY * k / N);
-            passos.push(`    ${arred(k * 100 / N)}% { transform: translate(${x}px, ${y}px); }`);
+            const x = round(phase * sway * Math.sin(2 * Math.PI * k / N));
+            const y = round(targetY * k / N);
+            steps.push(`    ${round(k * 100 / N)}% { transform: translate(${x}px, ${y}px); }`);
         }
-        quadros = `\n@keyframes ${nome} {\n${passos.join('\n')}\n}`;
+        frames = `\n@keyframes ${name} {\n${steps.join('\n')}\n}`;
     } else {
-        quadros = `
-@keyframes ${nome} {
+        frames = `
+@keyframes ${name} {
     from { transform: translate(0, 0); }
-    to { transform: translate(${dx}px, ${alvoY}px); }
+    to { transform: translate(${dx}px, ${targetY}px); }
 }`;
     }
 
     return `
-${seletor} {
+${selector} {
     content: '';
     position: absolute;
-    left: ${-esq}px; right: ${-dir}px;
-    top: ${topo};
-    height: calc(100% - ${TITULO}px + ${alt}px);
+    left: ${-left}px; right: ${-right}px;
+    top: ${top};
+    height: calc(100% - ${TITLE}px + ${height}px);
     pointer-events: none;
     z-index: ${z};
     background-image: url("${url}");
     background-repeat: repeat;
-    background-size: ${larg}px ${alt}px;
-    opacity: ${opacidade};
+    background-size: ${width}px ${height}px;
+    opacity: ${opacity};
     will-change: transform;
-    animation: ${nome} ${dur}s linear infinite;
-}${quadros}`;
+    animation: ${name} ${dur}s linear infinite;
+}${frames}`;
 }
 
-/** Camada parada, ancorada na base: chão de neve, rio, brasa. */
-function chao(url, altura, opacidade) {
+/** A still layer, anchored at the bottom: snow on the ground, the river, embers. */
+function ground(url, height, opacity) {
     return `
-${PAINEL}::before {
+${PANEL}::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -309,236 +368,245 @@ ${PAINEL}::before {
     background-image: url("${url}");
     background-repeat: repeat-x;
     background-position: center bottom;
-    background-size: auto ${altura}px;
-    opacity: ${opacidade};
+    background-size: auto ${height}px;
+    opacity: ${opacity};
 }`;
 }
 
-function cssDoEfeito(context, efeito, opacidade, velocidade, qualidade) {
-    const u = (arq) => urlDe(context, arq);
-    const v = (segundos) => (segundos / velocidade).toFixed(1);
-    const o = (mult) => Math.min(1, opacidade * mult).toFixed(2);
-    // no modo leve ficam só a camada de trás e o chão: o resto é enfeite
-    const completo = qualidade !== 'leve';
-    // o .part.panel não tem position no CSS do VS Code: sem isto, as camadas
-    // ancoram no workbench inteiro e vazam para fora do terminal
-    const clip = `\n${PAINEL} { position: relative !important; overflow: hidden !important; }`;
+function effectCss(context, effect, opacity, speed, quality) {
+    const u = (file) => urlOf(context, file);
+    const v = (seconds) => (seconds / speed).toFixed(1);
+    const o = (mult) => Math.min(1, opacity * mult).toFixed(2);
+    // the light mode keeps only the back layer and the ground: the rest is decoration
+    const full = quality !== 'light';
+    // .part.panel has no position in VS Code's CSS: without this, the layers
+    // anchor to the whole workbench and leak outside the terminal
+    const clip = `\n${PANEL} { position: relative !important; overflow: hidden !important; }`;
 
-    if (efeito === 'neve') {
+    if (effect === 'snow') {
         return clip + [
-            chao(u('neve-chao.svg'), 90, opacidade),
-            camada(`${PAINEL}::after`, u('neve-a.svg'), 640, 360, v(24),
-                opacidade, 'ta_neve_lenta', { balanco: 22 }),
-            completo && camada(`${CONTEUDO}::after`, u('neve-b.svg'), 420, 250,
-                v(13), opacidade * 0.8, 'ta_neve_rapida', { balanco: 14, fase: -1 }),
-            // flocos minúsculos bem lentos ao fundo dão a profundidade
-            completo && camada(`${CONTEUDO}::before`, u('neve-c.svg'), 360, 220,
-                v(38), opacidade * 0.55, 'ta_neve_fundo', { balanco: 10, z: 999 })
+            ground(u('snow-ground.svg'), 90, opacity),
+            layer(`${PANEL}::after`, u('snow-a.svg'), 640, 360, v(24),
+                opacity, 'ta_snow_slow', { sway: 22 }),
+            full && layer(`${CONTENT}::after`, u('snow-b.svg'), 420, 250,
+                v(13), opacity * 0.8, 'ta_snow_fast', { sway: 14, phase: -1 }),
+            // tiny, very slow flakes in the back give the depth
+            full && layer(`${CONTENT}::before`, u('snow-c.svg'), 360, 220,
+                v(38), opacity * 0.55, 'ta_snow_back', { sway: 10, z: 999 })
         ].filter(Boolean).join('\n');
     }
 
-    if (efeito === 'chuva') {
-        // os respingos no rio são 4 quadros PARADOS trocados por keyframe
-        // (impacto → coroa → anel → dissipação; ~2,5 repinturas/s, barato até
-        // para o modo leve): animação interna no SVG re-rasteriza a 60 fps e
-        // chegou a custar 62% de um núcleo (removida na 0.2.3)
-        const respingos = `
-${PAINEL}::before { animation: ta_respingos ${v(1.6)}s infinite; }
-@keyframes ta_respingos {
-    0%, 24% { background-image: url("${u('chuva-chao-a.svg')}"); }
-    25%, 49% { background-image: url("${u('chuva-chao-b.svg')}"); }
-    50%, 74% { background-image: url("${u('chuva-chao-c.svg')}"); }
-    75%, 100% { background-image: url("${u('chuva-chao-d.svg')}"); }
+    if (effect === 'rain') {
+        // the river splashes are 4 STILL frames swapped by keyframe
+        // (impact → crown → ring → fade; ~2.5 repaints/s, cheap even in
+        // light mode): an animation inside the SVG re-rasterizes at 60 fps and
+        // once cost 62% of a core (removed in 0.2.3)
+        const splashes = `
+${PANEL}::before { animation: ta_splashes ${v(1.6)}s infinite; }
+@keyframes ta_splashes {
+    0%, 24% { background-image: url("${u('rain-ground-a.svg')}"); }
+    25%, 49% { background-image: url("${u('rain-ground-b.svg')}"); }
+    50%, 74% { background-image: url("${u('rain-ground-c.svg')}"); }
+    75%, 100% { background-image: url("${u('rain-ground-d.svg')}"); }
 }`;
-        // O clarão é UM círculo parado no alto do painel. O Y é fixo (sempre
-        // colado no topo, seja o terminal alto ou baixo); só o X é sorteado.
-        // Diâmetro e brilho também variam, dentro de um mínimo e um máximo
-        // fixos — nada de estouro forte, que cansa a vista.
-        const MIN_D = 620, MAX_D = 1040;  // diâmetro do círculo, em px
-        const MIN_B = 0.20, MAX_B = 0.46; // brilho no pico do pisca
-        // o ciclo inteiro dura CICLO segundos e cabe um pisca por fatia, então
-        // dobrar o ciclo dobra o silêncio entre um raio e o outro (~4s na 0.8.1
-        // contra ~2s na 0.8.0). ESCALA encolhe os tempos de dentro do pisca na
-        // mesma medida: eles são % do ciclo, e sem isso o clarão que durava
-        // meio segundo passaria a se arrastar por um segundo inteiro.
-        const CICLO = 36, ESCALA = 18 / CICLO;
-        const entre = (a, b) => a + Math.random() * (b - a);
-        const pontos = [];
+        // The flash is ONE still circle at the top of the panel. Y is fixed
+        // (always against the top, whether the terminal is tall or short); only
+        // X is drawn at random. Diameter and brightness vary too, between a
+        // fixed minimum and maximum — no harsh bursts, which tire the eyes.
+        const MIN_D = 620, MAX_D = 1040;  // circle diameter, in px
+        const MIN_B = 0.20, MAX_B = 0.46; // brightness at the flicker's peak
+        // the whole cycle lasts CYCLE seconds and fits one flicker per slice, so
+        // doubling the cycle doubles the silence between one bolt and the next
+        // (~4s in 0.8.1 against ~2s in 0.8.0). SCALE shrinks the timings inside
+        // the flicker by the same amount: they are % of the cycle, and without it
+        // the flash that lasted half a second would drag on for a whole second.
+        const CYCLE = 36, SCALE = 18 / CYCLE;
+        const between = (a, b) => a + Math.random() * (b - a);
+        const points = [];
         for (let i = 0, x = 50; i < 9; i++) {
-            // sorteia até cair longe do clarão anterior, senão dois piscas
-            // seguidos saem quase no mesmo lugar e parece que ele ficou preso
-            let novo = entre(10, 90);
-            for (let tenta = 0; Math.abs(novo - x) < 28 && tenta < 8; tenta++) {
-                novo = entre(10, 90);
+            // draws until it lands far from the previous flash, otherwise two
+            // flickers in a row come out almost in the same place and it looks stuck
+            let next = between(10, 90);
+            for (let tries = 0; Math.abs(next - x) < 28 && tries < 8; tries++) {
+                next = between(10, 90);
             }
-            x = novo;
-            const tam = Math.round(entre(MIN_D, MAX_D));
-            // em pouco mais da metade dos piscas o feixe desce junto; nos
-            // outros fica só a luz, senão todo clarão viraria raio
-            const feixe = Math.random() < 0.6;
-            pontos.push({
-                x: x.toFixed(1),                      // eixo X: sorteado
-                y: -Math.round(tam * 0.38),           // eixo Y: preso no topo
-                tam,
-                feixe,
-                // com feixe o pico sobe um pouco: no brilho de sempre o
-                // desenho do raio quase não aparece
-                brilho: feixe ? entre(0.34, 0.62) : entre(MIN_B, MAX_B)
+            x = next;
+            const size = Math.round(between(MIN_D, MAX_D));
+            // in a little over half the flickers the bolt comes down too; in
+            // the others there's only the light, otherwise every flash would be a bolt
+            const bolt = Math.random() < 0.6;
+            points.push({
+                x: x.toFixed(1),                      // X axis: random
+                y: -Math.round(size * 0.38),          // Y axis: pinned to the top
+                size,
+                bolt,
+                // with a bolt the peak goes up a little: at the usual brightness
+                // the bolt drawing barely shows
+                brightness: bolt ? between(0.34, 0.62) : between(MIN_B, MAX_B)
             });
         }
-        const passo = 100 / pontos.length;
-        // por ponto: acende no lugar novo, dá o pisca duplo e apaga. A posição
-        // e o tamanho são repetidos no fim da fatia porque `background-position`
-        // é animável: sem essa parada o círculo escorregaria em direção ao
-        // ponto seguinte enquanto ainda estava aceso — era a "bola passando
-        // pela tela" da 0.7.9. Agora o pulo acontece todo no escuro.
-        const claroes = pontos.map((p, i) => {
-            const t = (n) => (i * passo + n * ESCALA).toFixed(3);
-            // as duas camadas (feixe e luz) dividem posição e tamanho, então
-            // o raio nasce exatamente no meio do clarão. Sem feixe, a camada
-            // de cima vai com tamanho zero e não desenha nada
-            const caixa = `${p.tam}px ${p.tam}px`;
-            const lugar = `background-position: ${p.x}% ${p.y}px, ${p.x}% ${p.y}px;`
-                + ` background-size: ${p.feixe ? caixa : '0 0'}, ${caixa};`;
+        const step = 100 / points.length;
+        // per point: lights up in the new place, flickers twice and goes out. The
+        // position and size are repeated at the end of the slice because
+        // `background-position` is animatable: without that stop the circle would
+        // slide towards the next point while still lit — that was the "ball
+        // crossing the screen" of 0.7.9. Now the jump happens entirely in the dark.
+        const flashes = points.map((p, i) => {
+            const t = (n) => (i * step + n * SCALE).toFixed(3);
+            // the two layers (bolt and light) share position and size, so the
+            // bolt is born exactly in the middle of the flash. Without a bolt, the
+            // top layer gets size zero and draws nothing
+            const box = `${p.size}px ${p.size}px`;
+            const place = `background-position: ${p.x}% ${p.y}px, ${p.x}% ${p.y}px;`
+                + ` background-size: ${p.bolt ? box : '0 0'}, ${box};`;
             return `
-    ${t(0)}% { opacity: 0; ${lugar} }
-    ${t(0.25)}% { opacity: ${o(p.brilho * 0.7)}; }
-    ${t(0.60)}% { opacity: ${o(p.brilho * 0.25)}; }
-    ${t(1.00)}% { opacity: ${o(p.brilho)}; }
-    ${t(1.70)}% { opacity: ${o(p.brilho * 0.3)}; }
+    ${t(0)}% { opacity: 0; ${place} }
+    ${t(0.25)}% { opacity: ${o(p.brightness * 0.7)}; }
+    ${t(0.60)}% { opacity: ${o(p.brightness * 0.25)}; }
+    ${t(1.00)}% { opacity: ${o(p.brightness)}; }
+    ${t(1.70)}% { opacity: ${o(p.brightness * 0.3)}; }
     ${t(2.50)}% { opacity: 0; }
-    ${(i * passo + passo - 0.01).toFixed(2)}% { opacity: 0; ${lugar} }`;
+    ${(i * step + step - 0.01).toFixed(2)}% { opacity: 0; ${place} }`;
         }).join('');
         return clip + [
-            chao(u('chuva-chao-a.svg'), 96, opacidade) + respingos,
-            camada(`${PAINEL}::after`, u('chuva-a.svg'), 160, 520, v(2.7),
-                opacidade, 'ta_chuva_grossa', { diagonal: true }),
-            completo && camada(`${CONTEUDO}::after`, u('chuva-b.svg'), 140, 460,
-                v(3.4), opacidade * 0.8, 'ta_chuva_fina', { diagonal: true }),
-            // duas camadas na mesma caixa quadrada: o feixe desenhado por
-            // cima e, embaixo, o gradiente radial da luz — o `circle` mantém
-            // ele redondo mesmo num painel largo e o `closest-side` faz a luz
-            // acabar antes da borda do tile, senão o `no-repeat` corta o brilho
-            // em linha reta (bug consertado na 0.7.8). O centro fica um pouco
-            // acima da borda de cima, então o que aparece é o brilho (e o raio)
-            // descendo do topo. Como as duas camadas têm o mesmo tamanho e a
-            // mesma posição em %, o raio sai sempre do meio do clarão; e
-            // posição em % nunca joga a caixa para fora do painel, então nem a
-            // luz nem o feixe passam da largura do terminal. Uma repintura por
-            // pisca; o resto é opacidade, que é barata.
+            ground(u('rain-ground-a.svg'), 96, opacity) + splashes,
+            layer(`${PANEL}::after`, u('rain-a.svg'), 160, 520, v(2.7),
+                opacity, 'ta_rain_heavy', { diagonal: true }),
+            full && layer(`${CONTENT}::after`, u('rain-b.svg'), 140, 460,
+                v(3.4), opacity * 0.8, 'ta_rain_fine', { diagonal: true }),
+            // two layers in the same square box: the bolt drawn on top and,
+            // below, the light's radial gradient — `circle` keeps it round even
+            // in a wide panel and `closest-side` makes the light end before the
+            // tile edge, otherwise `no-repeat` cuts the glow in a straight line
+            // (a bug fixed in 0.7.8). The center sits a little above the top
+            // edge, so what shows is the glow (and the bolt) coming down from the
+            // top. Since both layers have the same size and the same % position,
+            // the bolt always comes out of the middle of the flash; and a %
+            // position never pushes the box out of the panel, so neither the light
+            // nor the bolt goes past the terminal width. One repaint per flicker;
+            // the rest is opacity, which is cheap.
             `
-${CONTEUDO}::before {
+${CONTENT}::before {
     content: '';
     position: absolute;
     left: 0; right: 0;
-    top: ${TITULO}px;
-    height: calc(100% - ${TITULO}px);
+    top: ${TITLE}px;
+    height: calc(100% - ${TITLE}px);
     pointer-events: none;
     z-index: 1000;
-    background-image: url("${u('chuva-raio.svg')}"), radial-gradient(circle closest-side, rgba(240,249,255,0.95) 0%, rgba(200,230,255,0.62) 28%, rgba(162,209,252,0.3) 52%, rgba(142,194,246,0.09) 76%, rgba(130,185,240,0) 100%);
+    background-image: url("${u('rain-lightning.svg')}"), radial-gradient(circle closest-side, rgba(240,249,255,0.95) 0%, rgba(200,230,255,0.62) 28%, rgba(162,209,252,0.3) 52%, rgba(142,194,246,0.09) 76%, rgba(130,185,240,0) 100%);
     background-repeat: no-repeat;
     opacity: 0;
-    animation: ta_clarao ${v(CICLO)}s linear infinite;
+    animation: ta_flash ${v(CYCLE)}s linear infinite;
 }
-@keyframes ta_clarao {${claroes}
+@keyframes ta_flash {${flashes}
     100% { opacity: 0; }
 }`
         ].filter(Boolean).join('\n');
     }
 
-    if (efeito === 'brasas') {
-        // o visual clássico: fagulhas subindo reto, fumaça difusa e o brilho
-        // quente parado na base — sem pulso e sem vaivém
+    if (effect === 'embers') {
+        // the classic look: sparks rising straight up, diffuse smoke and the
+        // warm glow still at the bottom — no pulse and no sway
         return clip + [
-            chao(u('brasas-chao.svg'), 80, opacidade),
-            camada(`${PAINEL}::after`, u('brasas-a.svg'), 620, 340, v(20),
-                opacidade, 'ta_brasa_lenta', { subindo: true }),
-            completo && camada(`${CONTEUDO}::after`, u('brasas-b.svg'), 400, 230,
-                v(11), opacidade * 0.85, 'ta_brasa_rapida', { subindo: true })
+            ground(u('embers-ground.svg'), 80, opacity),
+            layer(`${PANEL}::after`, u('embers-a.svg'), 620, 340, v(20),
+                opacity, 'ta_ember_slow', { rising: true }),
+            full && layer(`${CONTENT}::after`, u('embers-b.svg'), 400, 230,
+                v(11), opacity * 0.85, 'ta_ember_fast', { rising: true })
         ].filter(Boolean).join('\n');
     }
 
     return '';
 }
 
-// ─── Aplicação ───────────────────────────────────────────────────────────────
-// O workbench não recarrega estilos gravados em seus arquivos: o Chromium os
-// serve do cache. Então o patch é um carregador FIXO, que relê `atual.css` a
-// cada 1s — o CSP do workbench permite fetch same-origin em vscode-file://.
-// O bloco não embute nada que mude entre efeitos ou versões: o atual.css mora
-// no globalStorage, cujo caminho não muda quando a extensão atualiza. Trocar
-// de efeito é só reescrever esse arquivo — aplica ao vivo, sem reload. O único
-// reload que existe é o da primeira instalação (ou quando uma atualização do
-// VS Code apaga o patch).
+// ─── Applying ───────────────────────────────────────────────────────────────
+// The workbench doesn't reload styles written into its files: Chromium serves
+// them from cache. So the patch is a FIXED loader that rereads `current.css`
+// every 1s — the workbench CSP allows same-origin fetch on vscode-file://.
+// The block embeds nothing that changes between effects or versions: the
+// current.css lives in globalStorage, whose path doesn't change when the
+// extension updates. Switching effects is just rewriting that file — it applies
+// live, with no reload. The only reload there is happens on the first install
+// (or when a VS Code update wipes the patch).
 
-function caminhoJs() {
+function jsPath() {
     return path.join(vscode.env.appRoot, 'out', 'vs', 'workbench',
         'workbench.desktop.main.js');
 }
 
-function caminhoCssVsCode() {
+function vsCodeCssPath() {
     return path.join(vscode.env.appRoot, 'out', 'vs', 'workbench',
         'workbench.desktop.main.css');
 }
 
-function arquivoCss(context) {
-    // globalStorage: raiz válida do protocolo vscode-file (junto com appRoot e
-    // a pasta de extensões) e, ao contrário da pasta da extensão, o caminho
-    // não muda a cada versão — o patch continua válido depois de atualizar
-    return path.join(context.globalStorageUri.fsPath, 'atual.css');
+function cssFile(context) {
+    // globalStorage: a valid root of the vscode-file protocol (along with appRoot
+    // and the extensions folder) and, unlike the extension folder, its path
+    // doesn't change on every version — the patch stays valid after updating
+    return path.join(context.globalStorageUri.fsPath, 'current.css');
 }
 
-function semNossoBloco(texto) {
-    const inicio = texto.indexOf(MARCA_INICIO);
-    if (inicio < 0) return texto;
-    // a marca de fim só vale se vier DEPOIS da de início; sem esse par não dá
-    // para saber onde o bloco termina — aí é melhor deixar o resquício quieto
-    // do que decepar o arquivo (foi isso que arrancou 3,4 KB de CSS do
-    // workbench e deixou o campo de commit do Git renderizando fora da caixa)
-    const fim = texto.indexOf(MARCA_FIM, inicio + MARCA_INICIO.length);
-    if (fim < 0) return texto;
-    return texto.slice(0, inicio) + texto.slice(fim + MARCA_FIM.length);
-}
-
-/** Versões antigas gravavam o efeito direto no CSS do VS Code; limpa o resto. */
-function limparCssAntigo() {
+/** Up to 0.8.1 the loader read `atual.css`; removes the orphan once the new file exists. */
+function removeLegacyCssFile(context) {
     try {
-        const arquivo = caminhoCssVsCode();
-        const css = fs.readFileSync(arquivo, 'utf8');
-        const limpo = semNossoBloco(css);
-        if (limpo !== css) fs.writeFileSync(arquivo, limpo, 'utf8');
+        fs.unlinkSync(path.join(context.globalStorageUri.fsPath, 'atual.css'));
     } catch (_) {
-        // sem permissão ou já limpo: não é motivo para falhar
+        // already gone
+    }
+}
+
+function withoutOurBlock(text) {
+    const start = text.indexOf(START_MARK);
+    if (start < 0) return text;
+    // the end marker only counts if it comes AFTER the start one; without that
+    // pair there's no way to know where the block ends — then it is better to
+    // leave the remnant alone than to chop the file (that is what tore 3.4 KB of
+    // CSS out of the workbench and left the Git commit field rendering outside its box)
+    const end = text.indexOf(END_MARK, start + START_MARK.length);
+    if (end < 0) return text;
+    return text.slice(0, start) + text.slice(end + END_MARK.length);
+}
+
+/** Old versions wrote the effect straight into VS Code's CSS; cleans up the rest. */
+function cleanOldCss() {
+    try {
+        const file = vsCodeCssPath();
+        const css = fs.readFileSync(file, 'utf8');
+        const clean = withoutOurBlock(css);
+        if (clean !== css) fs.writeFileSync(file, clean, 'utf8');
+    } catch (_) {
+        // no permission or already clean: no reason to fail
     }
 }
 
 /**
- * A extensão antiga Fundo Animado (aposentada em favor desta) gravava um bloco
- * vscode-background no workbench.html que desenhava o efeito SEMPRE, ignorando
- * qualquer configuração — era ele que mantinha neve na tela mesmo no "Nenhum".
- * Remove só blocos que citam fundo-animado, sem tocar em patch de terceiros.
+ * The old Fundo Animado extension (retired in favor of this one) wrote a
+ * vscode-background block into workbench.html that drew the effect ALWAYS,
+ * ignoring any setting — it was what kept snow on screen even on "None".
+ * Removes only blocks that mention fundo-animado, without touching third-party patches.
  */
-function limparHtmlAntigo() {
-    for (const pasta of ['electron-browser', 'electron-sandbox']) {
+function cleanOldHtml() {
+    for (const folder of ['electron-browser', 'electron-sandbox']) {
         try {
-            const arquivo = path.join(vscode.env.appRoot, 'out', 'vs', 'code',
-                pasta, 'workbench', 'workbench.html');
-            const html = fs.readFileSync(arquivo, 'utf8');
-            const limpo = html.replace(
+            const file = path.join(vscode.env.appRoot, 'out', 'vs', 'code',
+                folder, 'workbench', 'workbench.html');
+            const html = fs.readFileSync(file, 'utf8');
+            const clean = html.replace(
                 /\n?<!-- vscode-background-start[\s\S]*?<!-- vscode-background-end -->/g,
-                (bloco) => bloco.includes('fundo-animado') ? '' : bloco);
-            if (limpo !== html) fs.writeFileSync(arquivo, limpo, 'utf8');
+                (block) => block.includes('fundo-animado') ? '' : block);
+            if (clean !== html) fs.writeFileSync(file, clean, 'utf8');
         } catch (_) {
-            // pasta de outra época do VS Code ou sem permissão: segue
+            // a folder from another VS Code era or no permission: move on
         }
     }
 }
 
-// Mexer nos arquivos do workbench faz o VS Code avisar "instalação corrompida"
-// a cada abertura. O patch aqui é intencional, então o aviso só atrapalha:
-// este CSS (sempre presente no atual.css, mesmo no efeito "nenhum") esconde
-// esse toast específico, nas traduções em que ele existe.
-const AVISO_CORROMPIDO = [
+// Touching the workbench files makes VS Code warn "installation corrupt" on
+// every start. The patch here is intentional, so the warning only gets in the
+// way: this CSS (always present in current.css, even with the "none" effect)
+// hides that specific toast, in the translations where it exists.
+const CORRUPT_WARNING = [
     'installation appears to be corrupt. Please reinstall.',
     'parece estar corrompida. Reinstale-o.',
     'parece estar dañada. Vuelva a instalar.',
@@ -553,242 +621,244 @@ const AVISO_CORROMPIDO = [
     '설치가 손상된 것 같습니다. 다시 설치하세요.',
     '安装似乎损坏。请重新安装。',
     '安裝似乎已損毀。請重新安裝。'
-].map((texto) =>
-    `.notification-toast-container:has([aria-label*='${texto}']){display:none;}`
+].map((text) =>
+    `.notification-toast-container:has([aria-label*='${text}']){display:none;}`
 ).join('\n');
 
-function scriptCarregador(urlCss) {
+function loaderScript(cssUrl) {
     return `;(function () {
-    var ID = 'terminal-animado-estilo';
-    var URL = ${JSON.stringify(urlCss)};
-    var ultimo = null;
-    function aplicar(texto) {
+    var ID = 'terminal-animado-style';
+    var URL = ${JSON.stringify(cssUrl)};
+    var last = null;
+    function apply(text) {
         var el = document.getElementById(ID);
         if (!el) {
             el = document.createElement('style');
             el.id = ID;
             document.head.appendChild(el);
         }
-        el.textContent = texto;
+        el.textContent = text;
     }
     function tick() {
         try {
             fetch(URL, { cache: 'no-store' })
                 .then(function (r) { return r.ok ? r.text() : null; })
-                .then(function (texto) {
-                    // leitura vazia ou com erro NUNCA vale: o atual.css sempre
-                    // tem ao menos o CSS do aviso. Aplicar '' aqui apagava o
-                    // efeito por um tick e o retorno reiniciava as animações
-                    // do zero — o "engasgo" periódico. Mantém o último CSS bom.
-                    if (texto && texto !== ultimo) { ultimo = texto; aplicar(texto); }
+                .then(function (text) {
+                    // an empty or failed read NEVER counts: current.css always
+                    // has at least the warning CSS. Applying '' here wiped the
+                    // effect for one tick and the comeback restarted the
+                    // animations from zero — the periodic "stutter". Keeps the last good CSS.
+                    if (text && text !== last) { last = text; apply(text); }
                 })
                 .catch(function () { });
         } catch (e) { }
     }
-    function iniciar() { tick(); setInterval(tick, 1000); }
+    function start() { tick(); setInterval(tick, 1000); }
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', iniciar);
+        document.addEventListener('DOMContentLoaded', start);
     } else {
-        iniciar();
+        start();
     }
 })();`;
 }
 
 
-/** O bloco é 100% estável: nada nele muda com o efeito nem com a versão. */
-function blocoCarregador(context) {
-    return `\n${MARCA_INICIO}\n${scriptCarregador(
-        'vscode-file://vscode-app' + arquivoCss(context))}\n${MARCA_FIM}\n`;
+/** The block is 100% stable: nothing in it changes with the effect or the version. */
+function loaderBlock(context) {
+    return `\n${START_MARK}\n${loaderScript(
+        'vscode-file://vscode-app' + cssFile(context))}\n${END_MARK}\n`;
 }
 
 /**
- * Garante o carregador no JS do workbench.
- * @returns {'ja'|'primeira'|'atualizado'|'falha'} 'ja' = nada a fazer.
+ * Makes sure the loader is in the workbench JS.
+ * @returns {'present'|'first'|'updated'|'failed'} 'present' = nothing to do.
  */
-async function garantirCarregador(context) {
-    const bloco = blocoCarregador(context);
+async function ensureLoader(context) {
+    const block = loaderBlock(context);
 
     let js;
     try {
-        js = fs.readFileSync(caminhoJs(), 'utf8');
-    } catch (erro) {
+        js = fs.readFileSync(jsPath(), 'utf8');
+    } catch (error) {
         vscode.window.showErrorMessage(
-            `Terminal Animado: não consegui ler os arquivos do VS Code (${erro.code}).`);
-        return 'falha';
+            `Animated Terminal: couldn't read VS Code's files (${error.code}).`);
+        return 'failed';
     }
 
-    if (js.includes(bloco)) return 'ja';
-    const primeiraVez = !js.includes(MARCA_INICIO);
+    if (js.includes(block)) return 'present';
+    const firstTime = !js.includes(START_MARK);
 
     try {
-        fs.writeFileSync(caminhoJs(), semNossoBloco(js) + bloco, 'utf8');
-        return primeiraVez ? 'primeira' : 'atualizado';
-    } catch (erro) {
-        if (erro.code === 'EACCES' || erro.code === 'EPERM') {
-            const comando = `sudo chown -R $USER "${vscode.env.appRoot}"`;
-            const escolha = await vscode.window.showErrorMessage(
-                'Terminal Animado precisa de permissão para escrever nos arquivos do ' +
-                'VS Code. Rode o comando abaixo no terminal e tente de novo.',
-                'Copiar comando');
-            if (escolha === 'Copiar comando') {
-                await vscode.env.clipboard.writeText(comando);
+        fs.writeFileSync(jsPath(), withoutOurBlock(js) + block, 'utf8');
+        return firstTime ? 'first' : 'updated';
+    } catch (error) {
+        if (error.code === 'EACCES' || error.code === 'EPERM') {
+            const command = `sudo chown -R $USER "${vscode.env.appRoot}"`;
+            const choice = await vscode.window.showErrorMessage(
+                'Animated Terminal needs permission to write to VS Code\'s files. ' +
+                'Run the command below in a terminal and try again.',
+                'Copy command');
+            if (choice === 'Copy command') {
+                await vscode.env.clipboard.writeText(command);
             }
         } else {
             vscode.window.showErrorMessage(
-                `Terminal Animado: falha ao gravar (${erro.code}).`);
+                `Animated Terminal: failed to write (${error.code}).`);
         }
-        return 'falha';
+        return 'failed';
     }
 }
 
-function configuracao() {
+function configuration() {
     const cfg = vscode.workspace.getConfiguration('terminalAnimado');
     return {
-        efeito: cfg.get('efeito', 'nenhum'),
-        opacidade: cfg.get('opacidade', 0.5),
-        velocidade: cfg.get('velocidade', 1),
-        qualidade: cfg.get('qualidade', 'completo'),
-        colorir: cfg.get('colorirInterface', true)
+        effect: setting(cfg, 'effect', 'none'),
+        opacity: setting(cfg, 'opacity', 0.5),
+        speed: setting(cfg, 'speed', 1),
+        quality: setting(cfg, 'quality', 'full'),
+        tint: setting(cfg, 'tintInterface', true)
     };
 }
 
-async function aplicarDaConfig(context) {
-    const { efeito, opacidade, velocidade, qualidade, colorir } = configuracao();
-    const corpo = EFEITOS[efeito]
-        ? cssDoEfeito(context, efeito, opacidade, velocidade, qualidade)
+async function applyFromConfig(context) {
+    const { effect, opacity, speed, quality, tint } = configuration();
+    const body = EFFECTS[effect]
+        ? effectCss(context, effect, opacity, speed, quality)
         : '';
 
-    const arquivo = arquivoCss(context);
-    fs.mkdirSync(path.dirname(arquivo), { recursive: true });
-    // gravação atômica: escreve num temporário e renomeia. Gravar direto
-    // deixava uma janela em que o carregador lia o arquivo truncado no meio
-    // da escrita, aplicava CSS quebrado e o tick seguinte reiniciava as
-    // animações do zero
-    const temporario = arquivo + '.tmp';
-    fs.writeFileSync(temporario, `${AVISO_CORROMPIDO}\n${corpo}`, 'utf8');
-    fs.renameSync(temporario, arquivo);
+    const file = cssFile(context);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    // atomic write: writes to a temporary file and renames it. Writing directly
+    // left a window in which the loader read the file truncated mid-write,
+    // applied broken CSS and the next tick restarted the animations from zero
+    const temporary = file + '.tmp';
+    fs.writeFileSync(temporary, `${CORRUPT_WARNING}\n${body}`, 'utf8');
+    fs.renameSync(temporary, file);
 
-    await aplicarCores(context,
-        colorir && PALETAS[efeito] ? PALETAS[efeito] : {});
+    await applyColors(context,
+        tint && PALETTES[effect] ? PALETTES[effect] : {});
 
-    // a gravação acima já é a troca: o carregador relê o atual.css a cada 1s
-    // e aplica ao vivo. Reload só existe quando o patch em si não está no ar —
-    // primeira instalação, migração de versão antiga ou VS Code atualizado.
-    const estado = await garantirCarregador(context);
-    if (estado === 'primeira' || estado === 'atualizado') {
-        const escolha = await vscode.window.showInformationMessage(
-            'Terminal Animado: recarregue a janela uma vez para ativar. ' +
-            'Depois disso as trocas aplicam na hora, sem recarregar.',
-            'Recarregar agora');
-        if (escolha === 'Recarregar agora') {
+    // the write above already is the switch: the loader rereads current.css
+    // every 1s and applies it live. A reload only exists when the patch itself
+    // isn't live — first install, migration from an old version or a VS Code update.
+    const state = await ensureLoader(context);
+    if (state === 'first' || state === 'updated') {
+        const choice = await vscode.window.showInformationMessage(
+            'Animated Terminal: reload the window once to activate it. ' +
+            'After that, switches apply instantly, with no reload.',
+            'Reload now');
+        if (choice === 'Reload now') {
             vscode.commands.executeCommand('workbench.action.reloadWindow');
         }
+    } else if (state === 'present') {
+        removeLegacyCssFile(context);
     }
 }
 
 /**
- * Encapsula uma função assíncrona sem parâmetros para nunca rodar duas
- * instâncias em voo ao mesmo tempo: uma chamada que chega enquanto a
- * anterior ainda está rodando só marca "pendente" — ao terminar, roda-se UMA
- * vez a mais, pegando o estado mais recente (não uma vez por chamada
- * pendente, senão uma sequência rápida de trocas enfileira trabalho à toa).
+ * Wraps a parameterless async function so two instances never run in flight
+ * at the same time: a call arriving while the previous one is still running
+ * only marks "pending" — when it finishes, it runs ONE more time, picking up
+ * the latest state (not once per pending call, otherwise a quick series of
+ * switches queues pointless work).
  *
- * Sem isto, duas chamadas de aplicarDaConfig concorrentes — o apply da
- * ativação da janela ainda em voo quando o usuário troca de efeito, duas
- * trocas rápidas em seguida, ou o mesmo `terminalAnimado.efeito` global
- * mudando em duas janelas ao mesmo tempo — podiam terminar em ORDEM
- * TROCADA: a mais lenta, presa a um estado mais velho, ainda vencia a
- * corrida e escrevia por cima da mais rápida. Era isso que fazia a cor nova
- * aparecer e, um instante depois, voltar para a antiga.
+ * Without this, two concurrent applyFromConfig calls — the window activation
+ * apply still in flight when the user switches effects, two quick switches in
+ * a row, or the same global `terminalAnimado.effect` changing in two windows
+ * at once — could finish in SWAPPED ORDER: the slower one, stuck with an older
+ * state, still won the race and wrote over the faster one. That is what made
+ * the new color show up and, a moment later, go back to the old one.
  */
-function serializarComColapso(fn) {
-    let emVoo = null;
-    let pendente = false;
-    function agendar() {
-        if (emVoo) {
-            pendente = true;
-            return emVoo;
+function serializeWithCollapse(fn) {
+    let inFlight = null;
+    let pending = false;
+    function schedule() {
+        if (inFlight) {
+            pending = true;
+            return inFlight;
         }
-        pendente = false;
-        emVoo = Promise.resolve()
+        pending = false;
+        inFlight = Promise.resolve()
             .then(fn)
-            .catch((erro) => {
-                console.error('Terminal Animado: falha ao aplicar configuração.', erro);
+            .catch((error) => {
+                console.error('Animated Terminal: failed to apply the configuration.', error);
             })
             .finally(() => {
-                emVoo = null;
-                if (pendente) agendar();
+                inFlight = null;
+                if (pending) schedule();
             });
-        return emVoo;
+        return inFlight;
     }
-    return agendar;
+    return schedule;
 }
 
 function activate(context) {
-    limparCssAntigo();
-    limparHtmlAntigo();
-    const agendarAplicarDaConfig = serializarComColapso(() => aplicarDaConfig(context));
-    agendarAplicarDaConfig();
+    cleanOldCss();
+    cleanOldHtml();
+    const scheduleApplyFromConfig = serializeWithCollapse(() => applyFromConfig(context));
+    // the migration rewrites settings, which triggers onDidChangeConfiguration
+    // and a new (collapsed) apply; reading falls back to the legacy keys anyway
+    migrateLegacySettings().finally(() => scheduleApplyFromConfig());
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('terminalAnimado.escolher', () => {
-            const { efeito } = configuracao();
-            const itens = Object.entries(EFEITOS).map(([chave, e]) => ({
-                label: e.rotulo, detail: e.detalhe, chave
+        vscode.commands.registerCommand('terminalAnimado.chooseEffect', () => {
+            const { effect } = configuration();
+            const items = Object.entries(EFFECTS).map(([key, e]) => ({
+                label: e.label, detail: e.detail, key
             }));
-            itens.push({ label: '🚫  Nenhum', detail: 'Remove o fundo', chave: 'nenhum' });
+            items.push({ label: '🚫  None', detail: 'Removes the background', key: 'none' });
 
-            const atual = itens.find((i) => i.chave === efeito);
-            if (atual) atual.description = '●  atual';
+            const current = items.find((i) => i.key === effect);
+            if (current) current.description = '●  current';
 
-            const escolhedor = vscode.window.createQuickPick();
-            escolhedor.items = itens;
-            escolhedor.placeholder = 'Escolha o efeito do fundo do terminal';
-            if (atual) escolhedor.activeItems = [atual];
-            escolhedor.onDidAccept(async () => {
-                const escolha = escolhedor.selectedItems[0];
-                escolhedor.hide();
-                if (!escolha) return;
-                // a aplicação acontece no onDidChangeConfiguration
+            const picker = vscode.window.createQuickPick();
+            picker.items = items;
+            picker.placeholder = 'Choose the terminal background effect';
+            if (current) picker.activeItems = [current];
+            picker.onDidAccept(async () => {
+                const choice = picker.selectedItems[0];
+                picker.hide();
+                if (!choice) return;
+                // applying happens in onDidChangeConfiguration
                 await vscode.workspace.getConfiguration('terminalAnimado')
-                    .update('efeito', escolha.chave, vscode.ConfigurationTarget.Global);
+                    .update('effect', choice.key, vscode.ConfigurationTarget.Global);
             });
-            escolhedor.onDidHide(() => escolhedor.dispose());
-            escolhedor.show();
+            picker.onDidHide(() => picker.dispose());
+            picker.show();
         }),
 
-        vscode.commands.registerCommand('terminalAnimado.remover', async () => {
+        vscode.commands.registerCommand('terminalAnimado.removeEffect', async () => {
             await vscode.workspace.getConfiguration('terminalAnimado')
-                .update('efeito', 'nenhum', vscode.ConfigurationTarget.Global);
+                .update('effect', 'none', vscode.ConfigurationTarget.Global);
         }),
 
-        vscode.commands.registerCommand('terminalAnimado.alternarCores', async () => {
+        vscode.commands.registerCommand('terminalAnimado.toggleColors', async () => {
             const cfg = vscode.workspace.getConfiguration('terminalAnimado');
-            const liga = !cfg.get('colorirInterface', true);
+            const on = !setting(cfg, 'tintInterface', true);
             try {
-                // a aplicação (ou restauração) acontece no onDidChangeConfiguration
-                await cfg.update('colorirInterface', liga,
+                // applying (or restoring) happens in onDidChangeConfiguration
+                await cfg.update('tintInterface', on,
                     vscode.ConfigurationTarget.Global);
             } catch (_) {
-                // atualização instalada sem reload: o host de extensões já roda
-                // o código novo, mas a janela só registra configurações novas
-                // do package.json ao recarregar — até lá o update é rejeitado
-                const escolha = await vscode.window.showWarningMessage(
-                    'Terminal Animado: recarregue a janela para concluir a ' +
-                    'atualização da extensão.', 'Recarregar agora');
-                if (escolha === 'Recarregar agora') {
+                // an update installed without a reload: the extension host already
+                // runs the new code, but the window only registers new
+                // package.json settings on reload — until then the update is rejected
+                const choice = await vscode.window.showWarningMessage(
+                    'Animated Terminal: reload the window to finish updating ' +
+                    'the extension.', 'Reload now');
+                if (choice === 'Reload now') {
                     vscode.commands.executeCommand('workbench.action.reloadWindow');
                 }
                 return;
             }
-            vscode.window.setStatusBarMessage(liga
-                ? 'Terminal Animado: cores da interface ligadas'
-                : 'Terminal Animado: cores da interface desligadas', 3000);
+            vscode.window.setStatusBarMessage(on
+                ? 'Animated Terminal: interface colors on'
+                : 'Animated Terminal: interface colors off', 3000);
         }),
 
         vscode.workspace.onDidChangeConfiguration((e) => {
             if (e.affectsConfiguration('terminalAnimado')) {
-                agendarAplicarDaConfig();
+                scheduleApplyFromConfig();
             }
         })
     );
@@ -796,15 +866,18 @@ function activate(context) {
 
 function deactivate() { }
 
-// _cssDoEfeito fica exposto para os testes de desempenho;
-// _blocoCarregador, para ferramentas que pré-aplicam o patch;
-// _aplicarCores e _paletas, para os testes de backup/restauração das cores;
-// _serializarComColapso, para o teste da fila que evita a corrida de escrita
+// _effectCss is exposed for the performance tests;
+// _loaderBlock, for tools that pre-apply the patch;
+// _applyColors and _palettes, for the color backup/restore tests;
+// _serializeWithCollapse, for the test of the queue that avoids the write race;
+// _setting and _migrateLegacySettings, for the legacy settings tests
 module.exports = {
     activate, deactivate,
-    _cssDoEfeito: cssDoEfeito,
-    _blocoCarregador: blocoCarregador,
-    _aplicarCores: aplicarCores,
-    _paletas: PALETAS,
-    _serializarComColapso: serializarComColapso
+    _effectCss: effectCss,
+    _loaderBlock: loaderBlock,
+    _applyColors: applyColors,
+    _palettes: PALETTES,
+    _serializeWithCollapse: serializeWithCollapse,
+    _setting: setting,
+    _migrateLegacySettings: migrateLegacySettings
 };
