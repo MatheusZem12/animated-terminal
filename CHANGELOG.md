@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.1
+
+- Survives VS Code updates installed by a package manager (pacman, dnf...):
+  those reinstall the workbench files owned by root, which made writing the
+  patch fail with a permission error and the effect disappear. The patch is
+  now written to a temporary file and renamed over the original, which only
+  needs write access to the folder — no `sudo chown` after every update
+
 ## 0.9.0
 
 - Everything in English: the name shown is now **Animated Terminal**, along

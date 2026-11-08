@@ -670,6 +670,32 @@ function loaderBlock(context) {
 }
 
 /**
+ * Writes `text` to `file` by creating a sibling temporary file and renaming it
+ * over the original. A package-manager update (pacman, dnf...) reinstalls the
+ * workbench files owned by root while the folders keep the user's ownership:
+ * writing into the file then fails with EACCES, but replacing it in the folder
+ * still works — so the patch survives VS Code updates without sudo.
+ */
+function writeReplacing(file, text) {
+    const temporary = `${file}.terminal-animado.tmp`;
+    try {
+        fs.writeFileSync(temporary, text, 'utf8');
+        try {
+            const { mode } = fs.statSync(file);
+            fs.chmodSync(temporary, mode & 0o777);
+        } catch (_) {
+            // keeps the default mode
+        }
+        fs.renameSync(temporary, file);
+    } catch (error) {
+        try { fs.unlinkSync(temporary); } catch (_) { /* never created */ }
+        // the folder isn't writable either: fall back to writing in place
+        if (error.code !== 'EACCES' && error.code !== 'EPERM') throw error;
+        fs.writeFileSync(file, text, 'utf8');
+    }
+}
+
+/**
  * Makes sure the loader is in the workbench JS.
  * @returns {'present'|'first'|'updated'|'failed'} 'present' = nothing to do.
  */
@@ -689,7 +715,7 @@ async function ensureLoader(context) {
     const firstTime = !js.includes(START_MARK);
 
     try {
-        fs.writeFileSync(jsPath(), withoutOurBlock(js) + block, 'utf8');
+        writeReplacing(jsPath(), withoutOurBlock(js) + block);
         return firstTime ? 'first' : 'updated';
     } catch (error) {
         if (error.code === 'EACCES' || error.code === 'EPERM') {

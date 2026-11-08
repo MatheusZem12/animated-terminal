@@ -2,7 +2,7 @@
     "name": "terminal-animado",
     "displayName": "Animated Terminal",
     "description": "Animated backgrounds for the VS Code terminal: snow drifting with the wind, slanted rain with flashes and bolts in the sky and splashes on the river, embers with rising sparks and smoke. GPU animation, without freezing the editor.",
-    "version": "0.9.0",
+    "version": "0.9.1",
     "publisher": "matheuszem",
     "license": "MIT",
     "engines": {
